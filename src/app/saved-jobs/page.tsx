@@ -122,7 +122,7 @@ export default function SavedJobsPage() {
                     </div>
                     <div className="bg-slate-700/50 rounded-lg p-2 text-center">
                       <p className="text-xs text-slate-400">Depth</p>
-                      <p className="font-semibold text-slate-200">{quote.inputs.depth}mm</p>
+                      <p className="font-semibold text-slate-200">{quote.inputs.depth}cm</p>
                     </div>
                   </div>
 

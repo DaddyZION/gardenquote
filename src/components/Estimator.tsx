@@ -26,8 +26,8 @@ import {
   RotateCcw
 } from "lucide-react";
 
-// Depth options in mm
-const DEPTH_OPTIONS = [25, 50, 75, 100, 150];
+// Depth options in cm
+const DEPTH_OPTIONS = [2.5, 5, 7.5, 10, 15];
 
 interface SavedQuote {
   id: string;
@@ -219,7 +219,7 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
 
           <Slider
             label="Depth"
-            unit="mm"
+            unit="cm"
             value={[depthIndex]}
             onValueChange={(value) => setDepthIndex(value[0])}
             min={0}

@@ -4,7 +4,7 @@
 export interface EstimatorInputs {
   length: number; // meters
   width: number; // meters
-  depth: number; // millimeters
+  depth: number; // centimeters
   diggingOut: boolean;
 }
 
@@ -27,10 +27,10 @@ export function calculateArea(length: number, width: number): number {
 
 /**
  * Calculate volume in cubic meters
- * Converts depth from mm to m
+ * Converts depth from cm to m
  */
-export function calculateVolume(area: number, depthMm: number): number {
-  return area * (depthMm / 1000);
+export function calculateVolume(area: number, depthCm: number): number {
+  return area * (depthCm / 100);
 }
 
 /**
