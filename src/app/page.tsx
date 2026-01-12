@@ -1,23 +1,23 @@
 import { Header } from "@/components/Header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Leaf, Calculator, FolderOpen, Zap } from "lucide-react";
+import { DollarSign, Calculator, FolderOpen, Zap } from "lucide-react";
 import Link from "next/link";
 
 export default function HomePage() {
   return (
     <>
       <Header
-        title="GardenQuote"
+        title="Pricer"
         subtitle="Your pocket estimator"
-        icon={<Leaf className="h-7 w-7" />}
+        icon={<DollarSign className="h-7 w-7" />}
       />
 
       <main className="px-4 py-6 max-w-lg mx-auto">
         {/* Hero Section */}
         <div className="text-center py-8">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-amber-500/20 rounded-full mb-4">
-            <Leaf className="h-10 w-10 text-amber-500" />
+            <DollarSign className="h-10 w-10 text-amber-500" />
           </div>
           <h2 className="text-2xl font-bold text-slate-100 mb-2">
             Quick Quotes, On Site

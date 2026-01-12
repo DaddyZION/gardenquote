@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { BottomNav } from "@/components/BottomNav";
 import { FeedbackButton } from "@/components/FeedbackButton";
+import { AnimatedBackground } from "@/components/AnimatedBackground";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -15,13 +16,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GardenQuote - Landscaping Estimator",
+  title: "Pricer - Job Estimator",
   description: "Mobile-first estimator for landscapers and gardeners. Calculate materials, generate quotes, and share via WhatsApp.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "GardenQuote",
+    title: "Pricer",
   },
 };
 
@@ -43,7 +44,8 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-900 text-slate-100`}
       >
-        <div className="min-h-screen pb-24">
+        <AnimatedBackground />
+        <div className="relative min-h-screen pb-24">
           {children}
         </div>
         <FeedbackButton />

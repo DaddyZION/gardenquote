@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* GardenQuote - Dark Theme with Amber Accents */
+/* Pricer - Dark Theme with Amber Accents */
 :root {
   --background: #0f172a; /* slate-900 */
   --foreground: #f1f5f9; /* slate-100 */
@@ -13,6 +13,86 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  
+  /* Custom animations */
+  --animate-float-slow: float-slow 20s ease-in-out infinite;
+  --animate-float-medium: float-medium 15s ease-in-out infinite;
+  --animate-pulse-slow: pulse-slow 8s ease-in-out infinite;
+  --animate-float-particle-1: float-particle-1 12s ease-in-out infinite;
+  --animate-float-particle-2: float-particle-2 10s ease-in-out infinite;
+  --animate-float-particle-3: float-particle-3 14s ease-in-out infinite;
+}
+
+/* Background animations */
+@keyframes float-slow {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(30px, -30px) scale(1.05);
+  }
+  50% {
+    transform: translate(0, -50px) scale(1);
+  }
+  75% {
+    transform: translate(-30px, -20px) scale(0.95);
+  }
+}
+
+@keyframes float-medium {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(-40px, 30px) scale(1.1);
+  }
+  66% {
+    transform: translate(20px, -20px) scale(0.9);
+  }
+}
+
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 0.3;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+}
+
+@keyframes float-particle-1 {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translateY(-100px) translateX(20px);
+    opacity: 0.4;
+  }
+}
+
+@keyframes float-particle-2 {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+    opacity: 0.15;
+  }
+  50% {
+    transform: translateY(-80px) translateX(-30px);
+    opacity: 0.3;
+  }
+}
+
+@keyframes float-particle-3 {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translateY(-120px) translateX(10px);
+    opacity: 0.35;
+  }
 }
 
 /* Force dark mode */

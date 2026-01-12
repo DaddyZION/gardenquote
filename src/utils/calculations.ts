@@ -161,7 +161,7 @@ export function generateWhatsAppUrl(quote: {
   sand: number;
   clientPrice: number;
 }): string {
-  const message = `🌿 GardenQuote Estimate 🌿
+  const message = `🌿 Pricer Estimate 🌿
 
 📐 Area: ${quote.area}m²
 

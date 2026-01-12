@@ -23,7 +23,9 @@ import {
   Calculator,
   Send,
   Save,
-  RotateCcw
+  RotateCcw,
+  Copy,
+  Check
 } from "lucide-react";
 
 // Depth options in cm
@@ -48,7 +50,7 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
   // Input state
   const [length, setLength] = useState<string>("");
   const [width, setWidth] = useState<string>("");
-  const [depthIndex, setDepthIndex] = useState<number>(1); // Default to 50mm
+  const [depthIndex, setDepthIndex] = useState<number>(1); // Default to 5cm
   const [diggingOut, setDiggingOut] = useState<boolean>(false);
 
   // Quote state
@@ -59,9 +61,12 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
   // Calculation results
   const [results, setResults] = useState<CalculationResults | null>(null);
   const [quoteResults, setQuoteResults] = useState<QuoteResults | null>(null);
+  
+  // Copy to clipboard state
+  const [copied, setCopied] = useState(false);
 
   // localStorage key for current quote
-  const STORAGE_KEY = "gardenquote_current";
+  const STORAGE_KEY = "pricer_current";
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -184,6 +189,46 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
 
     window.open(url, "_blank");
   }, [results, quoteResults]);
+
+  const handleCopyToClipboard = useCallback(async () => {
+    if (!results || !quoteResults) return;
+
+    const quoteText = `🌿 Pricer Estimate 🌿
+
+📐 Dimensions: ${length}m × ${width}m
+📏 Depth: ${DEPTH_OPTIONS[depthIndex]}cm
+📐 Area: ${results.area}m²
+
+📦 Materials Required:
+• Slabs (600x600): ${results.slabs600x600} pcs
+• Sub-base: ${results.subBaseTonnes} tonnes
+• Sand: ${results.sandTonnes} tonnes
+${results.skipsNeeded > 0 ? `• Skips needed: ${results.skipsNeeded}` : ''}
+
+💷 Quote Summary:
+• Materials: £${parseFloat(materialsCost).toFixed(2)}
+• Labour (${daysEstimated} days @ £${dayRate}/day): £${quoteResults.laborCost.toFixed(2)}
+• Cost to You: £${quoteResults.totalCost.toFixed(2)}
+• Price to Client: £${quoteResults.clientPrice.toFixed(2)}
+
+This quote is valid for 14 days.`;
+
+    try {
+      await navigator.clipboard.writeText(quoteText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback for older browsers
+      const textArea = document.createElement("textarea");
+      textArea.value = quoteText;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }, [results, quoteResults, length, width, depthIndex, materialsCost, dayRate, daysEstimated]);
 
   return (
     <div className="space-y-6 pb-6">
@@ -388,15 +433,35 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
       {/* Action Buttons */}
       {results && quoteResults && (
         <div className="space-y-3">
-          <Button
-            variant="whatsapp"
-            size="lg"
-            className="w-full"
-            onClick={handleWhatsAppShare}
-          >
-            <Send className="h-5 w-5" />
-            WhatsApp Quote
-          </Button>
+          <div className="grid grid-cols-2 gap-3">
+            <Button
+              variant="whatsapp"
+              size="lg"
+              className="w-full"
+              onClick={handleWhatsAppShare}
+            >
+              <Send className="h-5 w-5" />
+              WhatsApp
+            </Button>
+            <Button
+              variant={copied ? "success" : "secondary"}
+              size="lg"
+              className="w-full"
+              onClick={handleCopyToClipboard}
+            >
+              {copied ? (
+                <>
+                  <Check className="h-5 w-5" />
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <Copy className="h-5 w-5" />
+                  Copy Quote
+                </>
+              )}
+            </Button>
+          </div>
 
           <div className="grid grid-cols-2 gap-3">
             <Button

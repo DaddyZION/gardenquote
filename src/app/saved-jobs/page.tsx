@@ -15,7 +15,7 @@ export default function SavedJobsPage() {
   // Load saved quotes from localStorage
   useEffect(() => {
     setMounted(true);
-    const saved = localStorage.getItem("gardenquote_saved");
+    const saved = localStorage.getItem("pricer_saved");
     if (saved) {
       try {
         setSavedQuotes(JSON.parse(saved));
@@ -28,7 +28,7 @@ export default function SavedJobsPage() {
   const handleDelete = useCallback((id: string) => {
     const updated = savedQuotes.filter((q) => q.id !== id);
     setSavedQuotes(updated);
-    localStorage.setItem("gardenquote_saved", JSON.stringify(updated));
+    localStorage.setItem("pricer_saved", JSON.stringify(updated));
   }, [savedQuotes]);
 
   const handleWhatsApp = useCallback((quote: SavedQuote) => {

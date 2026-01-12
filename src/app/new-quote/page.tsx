@@ -8,14 +8,14 @@ import { useCallback } from "react";
 export default function NewQuotePage() {
   const handleSaveQuote = useCallback((quote: SavedQuote) => {
     // Get existing saved quotes
-    const existingStr = localStorage.getItem("gardenquote_saved");
+    const existingStr = localStorage.getItem("pricer_saved");
     const existing: SavedQuote[] = existingStr ? JSON.parse(existingStr) : [];
     
     // Add new quote
     const updated = [quote, ...existing];
     
     // Save back to localStorage
-    localStorage.setItem("gardenquote_saved", JSON.stringify(updated));
+    localStorage.setItem("pricer_saved", JSON.stringify(updated));
     
     // Show confirmation
     alert("Quote saved successfully!");

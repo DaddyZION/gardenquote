@@ -21,12 +21,12 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
   if (!isOpen) return null;
 
   const handleSubmit = () => {
-    const subject = encodeURIComponent(`GardenQuote Feedback: ${feedbackType}`);
+    const subject = encodeURIComponent(`Pricer Feedback: ${feedbackType}`);
     const body = encodeURIComponent(
       `Feedback Type: ${feedbackType}\n` +
       `Rating: ${rating}/5 stars\n\n` +
       `Message:\n${message}\n\n` +
-      `---\nSent from GardenQuote App`
+      `---\nSent from Pricer App`
     );
     
     window.open(`mailto:${FEEDBACK_EMAIL}?subject=${subject}&body=${body}`, "_blank");
