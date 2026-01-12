@@ -14,10 +14,11 @@ import {
   type CalculationResults,
   type QuoteResults 
 } from "@/utils/calculations";
+import { MaterialsCalculator } from "@/components/MaterialsCalculator";
 import { 
   Ruler, 
   Layers, 
-  Package, 
+  Box,
   Shovel, 
   Calculator,
   Send,
@@ -94,6 +95,11 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   }, [length, width, depthIndex, diggingOut, dayRate, daysEstimated, materialsCost]);
+
+  // Callback for materials calculator total change
+  const handleMaterialsCostChange = useCallback((total: number) => {
+    setMaterialsCost(total.toString());
+  }, []);
 
   // Calculate results whenever inputs change
   useEffect(() => {
@@ -253,7 +259,7 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
                 value={`${results.area}m²`}
               />
               <ResultItem
-                icon={<Package className="h-5 w-5" />}
+                icon={<Box className="h-5 w-5" />}
                 label="Volume"
                 value={`${results.volume}m³`}
               />
@@ -306,6 +312,14 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
         </Card>
       )}
 
+      {/* Materials Calculator */}
+      {results && (
+        <MaterialsCalculator 
+          results={results} 
+          onTotalChange={handleMaterialsCostChange}
+        />
+      )}
+
       {/* Quote Card */}
       {results && (
         <Card variant="success">
@@ -336,21 +350,17 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
               />
             </div>
 
-            <Input
-              label="Materials Cost"
-              unit="£"
-              type="text"
-              inputMode="decimal"
-              placeholder="0"
-              value={materialsCost}
-              onChange={(e) => setMaterialsCost(e.target.value)}
-            />
-
             {quoteResults && (
-              <div className="space-y-3 pt-4">
-                <div className="flex justify-between items-center py-2">
+              <div className="space-y-3 pt-2">
+                <div className="flex justify-between items-center py-2 text-sm">
+                  <span className="text-slate-400">Materials Cost:</span>
+                  <span className="font-semibold text-slate-200">
+                    £{parseFloat(materialsCost).toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-2 text-sm">
                   <span className="text-slate-400">Labour Cost:</span>
-                  <span className="text-lg font-semibold text-slate-200">
+                  <span className="font-semibold text-slate-200">
                     £{quoteResults.laborCost.toFixed(2)}
                   </span>
                 </div>

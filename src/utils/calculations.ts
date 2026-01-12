@@ -103,6 +103,28 @@ export function calculateAll(inputs: EstimatorInputs): CalculationResults {
 }
 
 /**
+ * Typical UK material prices (adjustable)
+ */
+export const MATERIAL_PRICES = {
+  slabPer600x600: 3.50, // £ per slab
+  subBasePerTonne: 30, // £ per tonne of limestone
+  sandPerTonne: 45, // £ per tonne of sharp sand
+  skipHire6Yard: 250, // £ per 6-yard skip
+};
+
+/**
+ * Estimate materials cost based on calculated quantities
+ */
+export function estimateMaterialsCost(results: CalculationResults): number {
+  const slabsCost = results.slabs600x600 * MATERIAL_PRICES.slabPer600x600;
+  const subBaseCost = results.subBaseTonnes * MATERIAL_PRICES.subBasePerTonne;
+  const sandCost = results.sandTonnes * MATERIAL_PRICES.sandPerTonne;
+  const skipCost = results.skipsNeeded * MATERIAL_PRICES.skipHire6Yard;
+
+  return Number((slabsCost + subBaseCost + sandCost + skipCost).toFixed(2));
+}
+
+/**
  * Quote calculation helpers
  */
 export interface QuoteInputs {
