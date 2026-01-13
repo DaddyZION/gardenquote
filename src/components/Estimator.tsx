@@ -25,11 +25,12 @@ import {
   Save,
   RotateCcw,
   Copy,
-  Check
+  Check,
+  Fence
 } from "lucide-react";
 
-// Depth options in cm
-const DEPTH_OPTIONS = [2.5, 5, 7.5, 10, 15];
+// Depth options in cm (up to 1.5m)
+const DEPTH_OPTIONS = [5, 10, 15, 20, 25, 30, 40, 50, 75, 100, 150];
 
 interface SavedQuote {
   id: string;
@@ -50,8 +51,14 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
   // Input state
   const [length, setLength] = useState<string>("");
   const [width, setWidth] = useState<string>("");
-  const [depthIndex, setDepthIndex] = useState<number>(1); // Default to 5cm
+  const [depthIndex, setDepthIndex] = useState<number>(1); // Default to 10cm
   const [diggingOut, setDiggingOut] = useState<boolean>(false);
+  
+  // Fence calculator state
+  const [showFencing, setShowFencing] = useState<boolean>(false);
+  const [fenceLength, setFenceLength] = useState<string>("");
+  const [fenceHeight, setFenceHeight] = useState<"4ft" | "5ft" | "6ft">("6ft");
+  const [includeGravel, setIncludeGravel] = useState<boolean>(true);
 
   // Quote state
   const [dayRate, setDayRate] = useState<string>("250");
@@ -271,9 +278,9 @@ This quote is valid for 14 days.`;
             max={DEPTH_OPTIONS.length - 1}
             step={1}
           />
-          <div className="flex justify-between text-xs text-slate-500 -mt-2 px-1">
-            {DEPTH_OPTIONS.map((d) => (
-              <span key={d}>{d}</span>
+          <div className="flex justify-between text-xs text-slate-500 -mt-2 px-1 overflow-x-auto">
+            {DEPTH_OPTIONS.map((d, i) => (
+              <span key={d} className={i === depthIndex ? "text-amber-500 font-bold" : ""}>{d >= 100 ? `${d/100}m` : d}</span>
             ))}
           </div>
 
@@ -284,8 +291,162 @@ This quote is valid for 14 days.`;
               onCheckedChange={setDiggingOut}
             />
           </div>
+          
+          <div className="pt-2 border-t border-slate-700">
+            <Switch
+              label="Fencing?"
+              checked={showFencing}
+              onCheckedChange={setShowFencing}
+            />
+          </div>
         </CardContent>
       </Card>
+
+      {/* Fencing Calculator */}
+      {showFencing && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Fence className="h-5 w-5 text-amber-500" />
+              Fence Calculator
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Input
+              label="Fence Line Length"
+              unit="m"
+              type="text"
+              inputMode="decimal"
+              placeholder="0.0"
+              value={fenceLength}
+              onChange={(e) => setFenceLength(e.target.value)}
+            />
+
+            <div>
+              <label className="text-sm font-medium text-slate-300 block mb-2">
+                Fence Height
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {(["4ft", "5ft", "6ft"] as const).map((h) => (
+                  <button
+                    key={h}
+                    onClick={() => setFenceHeight(h)}
+                    className={`py-3 px-4 rounded-xl text-sm font-medium transition-all touch-manipulation ${
+                      fenceHeight === h
+                        ? "bg-amber-500 text-slate-900"
+                        : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                    }`}
+                  >
+                    {h}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <Switch
+              label="Include Gravel Boards?"
+              checked={includeGravel}
+              onCheckedChange={setIncludeGravel}
+            />
+
+            {/* Fence Calculations */}
+            {parseFloat(fenceLength) > 0 && (
+              <div className="bg-slate-700/50 rounded-xl p-4 space-y-3">
+                <h4 className="text-sm font-semibold text-amber-500 uppercase tracking-wide">
+                  Materials Needed
+                </h4>
+                {(() => {
+                  const len = parseFloat(fenceLength) || 0;
+                  // Standard fence panel is 6ft (1.83m) wide
+                  const panelWidth = 1.83;
+                  const panels = Math.ceil(len / panelWidth);
+                  // Posts = panels + 1 (one at each end plus between panels)
+                  const posts = panels + 1;
+                  // Postcrete: 1-2 bags per post (use 2 for safety)
+                  const postcrete = posts * 2;
+                  // Gravel boards: same as panels
+                  const gravelBoards = includeGravel ? panels : 0;
+                  // Post caps
+                  const postCaps = posts;
+                  
+                  // Height-specific details
+                  const heightInfo = {
+                    "4ft": { postLength: "6ft", panelPrice: 25, postPrice: 10 },
+                    "5ft": { postLength: "7ft", panelPrice: 30, postPrice: 12 },
+                    "6ft": { postLength: "8ft", panelPrice: 35, postPrice: 14 },
+                  };
+                  const info = heightInfo[fenceHeight];
+                  
+                  const panelCost = panels * info.panelPrice;
+                  const postCost = posts * info.postPrice;
+                  const postcreteCost = postcrete * 7;
+                  const gravelCost = gravelBoards * 12;
+                  const capsCost = postCaps * 3;
+                  const totalFenceCost = panelCost + postCost + postcreteCost + gravelCost + capsCost;
+
+                  return (
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Fence Panels ({fenceHeight}):</span>
+                        <span className="text-slate-100 font-medium">{panels} pcs</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Posts ({info.postLength}):</span>
+                        <span className="text-slate-100 font-medium">{posts} pcs</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Postcrete (bags):</span>
+                        <span className="text-slate-100 font-medium">{postcrete} bags</span>
+                      </div>
+                      {includeGravel && (
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Gravel Boards:</span>
+                          <span className="text-slate-100 font-medium">{gravelBoards} pcs</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Post Caps:</span>
+                        <span className="text-slate-100 font-medium">{postCaps} pcs</span>
+                      </div>
+                      
+                      <div className="border-t border-slate-600 pt-2 mt-2 space-y-1">
+                        <p className="text-xs text-slate-500 mb-2">Estimated costs:</p>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-slate-500">Panels @ £{info.panelPrice}:</span>
+                          <span className="text-slate-400">£{panelCost.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-slate-500">Posts @ £{info.postPrice}:</span>
+                          <span className="text-slate-400">£{postCost.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-slate-500">Postcrete @ £7:</span>
+                          <span className="text-slate-400">£{postcreteCost.toFixed(2)}</span>
+                        </div>
+                        {includeGravel && (
+                          <div className="flex justify-between text-xs">
+                            <span className="text-slate-500">Gravel boards @ £12:</span>
+                            <span className="text-slate-400">£{gravelCost.toFixed(2)}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-xs">
+                          <span className="text-slate-500">Post caps @ £3:</span>
+                          <span className="text-slate-400">£{capsCost.toFixed(2)}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-between pt-2 border-t border-slate-600">
+                        <span className="text-slate-200 font-semibold">Fencing Total:</span>
+                        <span className="text-lg font-bold text-amber-400">£{totalFenceCost.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Results Card */}
       {results && (
