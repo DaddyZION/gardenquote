@@ -26,7 +26,8 @@ import {
   RotateCcw,
   Copy,
   Check,
-  Fence
+  Fence,
+  X
 } from "lucide-react";
 
 // Depth options in cm (up to 1.5m)
@@ -34,6 +35,7 @@ const DEPTH_OPTIONS = [5, 10, 15, 20, 25, 30, 40, 50, 75, 100, 150];
 
 interface SavedQuote {
   id: string;
+  name: string;
   timestamp: number;
   inputs: EstimatorInputs;
   results: CalculationResults;
@@ -109,6 +111,10 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
   
   // Copy to clipboard state
   const [copied, setCopied] = useState(false);
+  
+  // Save modal state
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [quoteName, setQuoteName] = useState("");
 
   // localStorage key for current quote
   const STORAGE_KEY = "pricer_current";
@@ -209,11 +215,18 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
     localStorage.removeItem(STORAGE_KEY);
   }, []);
 
-  const handleSaveQuote = useCallback(() => {
+  const openSaveModal = useCallback(() => {
     if (!results || !quoteResults) return;
+    setQuoteName("");
+    setShowSaveModal(true);
+  }, [results, quoteResults]);
+
+  const handleSaveQuote = useCallback(() => {
+    if (!results || !quoteResults || !quoteName.trim()) return;
 
     const savedQuote: SavedQuote = {
       id: Date.now().toString(),
+      name: quoteName.trim(),
       timestamp: Date.now(),
       inputs: {
         length: parseFloat(length) || 0,
@@ -229,7 +242,9 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
     };
 
     onSaveQuote?.(savedQuote);
-  }, [results, quoteResults, length, width, depthIndex, diggingOut, dayRate, daysEstimated, materialsCost, onSaveQuote]);
+    setShowSaveModal(false);
+    setQuoteName("");
+  }, [results, quoteResults, quoteName, length, width, depthIndex, diggingOut, dayRate, daysEstimated, materialsCost, onSaveQuote]);
 
   const handleWhatsAppShare = useCallback(() => {
     if (!results || !quoteResults) return;
@@ -687,7 +702,7 @@ This quote is valid for 14 days.`;
             <Button
               variant="secondary"
               size="default"
-              onClick={handleSaveQuote}
+              onClick={openSaveModal}
             >
               <Save className="h-5 w-5" />
               Save Job
@@ -700,6 +715,58 @@ This quote is valid for 14 days.`;
               <RotateCcw className="h-5 w-5" />
               Reset
             </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Save Modal */}
+      {showSaveModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-800 rounded-2xl w-full max-w-md border border-slate-700 shadow-xl">
+            <div className="flex items-center justify-between p-4 border-b border-slate-700">
+              <h2 className="text-lg font-semibold text-slate-100">Save Quote</h2>
+              <button
+                onClick={() => setShowSaveModal(false)}
+                className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+              >
+                <X className="h-5 w-5 text-slate-400" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Client Name or Address
+                </label>
+                <Input
+                  type="text"
+                  placeholder="e.g. John Smith, 42 Oak Lane"
+                  value={quoteName}
+                  onChange={(e) => setQuoteName(e.target.value)}
+                  className="text-lg"
+                  autoFocus
+                />
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  size="default"
+                  className="flex-1"
+                  onClick={() => setShowSaveModal(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="default"
+                  size="default"
+                  className="flex-1"
+                  onClick={handleSaveQuote}
+                  disabled={!quoteName.trim()}
+                >
+                  <Save className="h-5 w-5" />
+                  Save
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       )}

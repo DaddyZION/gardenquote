@@ -95,6 +95,11 @@ export default function SavedJobsPage() {
             {savedQuotes.map((quote) => (
               <Card key={quote.id}>
                 <CardHeader className="pb-2">
+                  <div className="mb-1">
+                    <h3 className="text-lg font-bold text-slate-100 truncate">
+                      {quote.name || "Unnamed Quote"}
+                    </h3>
+                  </div>
                   <CardTitle className="flex items-center justify-between text-base">
                     <div className="flex items-center gap-2">
                       <Ruler className="h-4 w-4 text-amber-500" />
