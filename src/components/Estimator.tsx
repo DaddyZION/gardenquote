@@ -47,6 +47,43 @@ interface EstimatorProps {
   onSaveQuote?: (quote: SavedQuote) => void;
 }
 
+// Fence calculation helper
+function calculateFencingCost(fenceLength: string, fenceHeight: "4ft" | "5ft" | "6ft", includeGravel: boolean) {
+  const len = parseFloat(fenceLength) || 0;
+  if (len <= 0) return null;
+  
+  const panelWidth = 1.83;
+  const panels = Math.ceil(len / panelWidth);
+  const posts = panels + 1;
+  const postcrete = posts * 2;
+  const gravelBoards = includeGravel ? panels : 0;
+  const postCaps = posts;
+  
+  const heightInfo = {
+    "4ft": { postLength: "6ft", panelPrice: 25, postPrice: 10 },
+    "5ft": { postLength: "7ft", panelPrice: 30, postPrice: 12 },
+    "6ft": { postLength: "8ft", panelPrice: 35, postPrice: 14 },
+  };
+  const info = heightInfo[fenceHeight];
+  
+  const panelCost = panels * info.panelPrice;
+  const postCost = posts * info.postPrice;
+  const postcreteCost = postcrete * 7;
+  const gravelCost = gravelBoards * 12;
+  const capsCost = postCaps * 3;
+  const totalFenceCost = panelCost + postCost + postcreteCost + gravelCost + capsCost;
+
+  return {
+    panels,
+    posts,
+    postcrete,
+    gravelBoards,
+    postCaps,
+    postLength: info.postLength,
+    totalCost: totalFenceCost,
+  };
+}
+
 export function Estimator({ onSaveQuote }: EstimatorProps) {
   // Input state
   const [length, setLength] = useState<string>("");
@@ -59,6 +96,7 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
   const [fenceLength, setFenceLength] = useState<string>("");
   const [fenceHeight, setFenceHeight] = useState<"4ft" | "5ft" | "6ft">("6ft");
   const [includeGravel, setIncludeGravel] = useState<boolean>(true);
+  const [fencingCost, setFencingCost] = useState<number>(0);
 
   // Quote state
   const [dayRate, setDayRate] = useState<string>("250");
@@ -132,6 +170,16 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
     }
   }, [length, width, depthIndex, diggingOut]);
 
+  // Update fencing cost when fence inputs change
+  useEffect(() => {
+    if (showFencing) {
+      const fenceCalc = calculateFencingCost(fenceLength, fenceHeight, includeGravel);
+      setFencingCost(fenceCalc?.totalCost || 0);
+    } else {
+      setFencingCost(0);
+    }
+  }, [showFencing, fenceLength, fenceHeight, includeGravel]);
+
   // Calculate quote whenever quote inputs or results change
   useEffect(() => {
     if (results) {
@@ -142,13 +190,13 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
       const quote = calculateQuote({
         dayRate: dayRateNum,
         daysEstimated: daysNum,
-        materialsCost: materialsNum,
+        materialsCost: materialsNum + fencingCost, // Include fencing in materials
       });
       setQuoteResults(quote);
     } else {
       setQuoteResults(null);
     }
-  }, [results, dayRate, daysEstimated, materialsCost]);
+  }, [results, dayRate, daysEstimated, materialsCost, fencingCost]);
 
   const handleReset = useCallback(() => {
     setLength("");
@@ -200,6 +248,17 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
   const handleCopyToClipboard = useCallback(async () => {
     if (!results || !quoteResults) return;
 
+    // Build fencing section if applicable
+    const fenceCalc = showFencing ? calculateFencingCost(fenceLength, fenceHeight, includeGravel) : null;
+    const fencingSection = fenceCalc ? `
+🪵 Fencing (${fenceLength}m @ ${fenceHeight}):
+• Panels: ${fenceCalc.panels} pcs
+• Posts (${fenceCalc.postLength}): ${fenceCalc.posts} pcs
+• Postcrete: ${fenceCalc.postcrete} bags
+${fenceCalc.gravelBoards > 0 ? `• Gravel Boards: ${fenceCalc.gravelBoards} pcs\n` : ''}• Post Caps: ${fenceCalc.postCaps} pcs
+• Fencing Total: £${fenceCalc.totalCost.toFixed(2)}
+` : '';
+
     const quoteText = `🌿 Pricer Estimate 🌿
 
 📐 Dimensions: ${length}m × ${width}m
@@ -211,9 +270,9 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
 • Sub-base: ${results.subBaseTonnes} tonnes
 • Sand: ${results.sandTonnes} tonnes
 ${results.skipsNeeded > 0 ? `• Skips needed: ${results.skipsNeeded}` : ''}
-
+${fencingSection}
 💷 Quote Summary:
-• Materials: £${parseFloat(materialsCost).toFixed(2)}
+• Materials: £${parseFloat(materialsCost).toFixed(2)}${fenceCalc ? `\n• Fencing: £${fenceCalc.totalCost.toFixed(2)}` : ''}
 • Labour (${daysEstimated} days @ £${dayRate}/day): £${quoteResults.laborCost.toFixed(2)}
 • Cost to You: £${quoteResults.totalCost.toFixed(2)}
 • Price to Client: £${quoteResults.clientPrice.toFixed(2)}
@@ -235,7 +294,7 @@ This quote is valid for 14 days.`;
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
-  }, [results, quoteResults, length, width, depthIndex, materialsCost, dayRate, daysEstimated]);
+  }, [results, quoteResults, length, width, depthIndex, materialsCost, dayRate, daysEstimated, showFencing, fenceLength, fenceHeight, includeGravel]);
 
   return (
     <div className="space-y-6 pb-6">
