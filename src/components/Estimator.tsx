@@ -274,7 +274,7 @@ ${fenceCalc.gravelBoards > 0 ? `• Gravel Boards: ${fenceCalc.gravelBoards} pcs
 • Fencing Total: £${fenceCalc.totalCost.toFixed(2)}
 ` : '';
 
-    const quoteText = `🌿 Pricer Estimate 🌿
+    const quoteText = `⚡ InstaQuote Estimate ⚡
 
 📐 Dimensions: ${length}m × ${width}m
 📏 Depth: ${DEPTH_OPTIONS[depthIndex]}cm

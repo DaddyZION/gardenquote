@@ -17,13 +17,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pricer - Job Estimator",
+  title: "InstaQuote - Job Estimator",
   description: "Mobile-first estimator for landscapers and gardeners. Calculate materials, generate quotes, and share via WhatsApp.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Pricer",
+    title: "InstaQuote",
   },
 };
 

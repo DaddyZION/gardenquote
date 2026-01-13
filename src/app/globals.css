@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Pricer - Dark Theme with Amber Accents */
+/* InstaQuote - Dark Theme with Modern Gradient Accents */
 :root {
   --background: #0f172a; /* slate-900 */
   --foreground: #f1f5f9; /* slate-100 */
@@ -21,6 +21,7 @@
   --animate-float-particle-1: float-particle-1 12s ease-in-out infinite;
   --animate-float-particle-2: float-particle-2 10s ease-in-out infinite;
   --animate-float-particle-3: float-particle-3 14s ease-in-out infinite;
+  --animate-spin-slow: spin 8s linear infinite;
 }
 
 /* Background animations */
