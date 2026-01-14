@@ -11,7 +11,7 @@ interface FeedbackModalProps {
 }
 
 // Configure your email here
-const FEEDBACK_EMAIL = "xanaval102@atinjo.com";
+const FEEDBACK_EMAIL = "instaquote@pinmx.net";
 
 export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
   const [feedbackType, setFeedbackType] = useState<"bug" | "feature" | "general">("general");
