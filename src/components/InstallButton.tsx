@@ -11,9 +11,9 @@ interface BeforeInstallPromptEvent extends Event {
 
 export function InstallButton() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [showInstallButton, setShowInstallButton] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [showIOSModal, setShowIOSModal] = useState(false);
+  const [showAndroidModal, setShowAndroidModal] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
@@ -30,15 +30,9 @@ export function InstallButton() {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
-      setShowInstallButton(true);
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-
-    // Check if we should show the button for iOS (manual instructions)
-    if (iOS && !standalone) {
-      setShowInstallButton(true);
-    }
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
@@ -51,19 +45,22 @@ export function InstallButton() {
       return;
     }
 
-    if (!deferredPrompt) return;
-
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-
-    if (outcome === "accepted") {
-      setShowInstallButton(false);
+    // If we have a deferred prompt, use it
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === "accepted") {
+        setIsStandalone(true);
+      }
+      setDeferredPrompt(null);
+    } else {
+      // Show manual instructions for Android
+      setShowAndroidModal(true);
     }
-    setDeferredPrompt(null);
   };
 
   // Don't show if already installed
-  if (isStandalone || !showInstallButton) {
+  if (isStandalone) {
     return null;
   }
 
@@ -116,6 +113,52 @@ export function InstallButton() {
               <div className="pt-2">
                 <Button
                   onClick={() => setShowIOSModal(false)}
+                  className="w-full bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700"
+                >
+                  Got it!
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Android Instructions Modal */}
+      {showAndroidModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
+          <div className="bg-slate-800 rounded-2xl w-full max-w-md border border-slate-700 shadow-xl animate-in slide-in-from-bottom-4 duration-300">
+            <div className="flex items-center justify-between p-4 border-b border-slate-700">
+              <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
+                <Smartphone className="h-5 w-5 text-violet-400" />
+                Install InstaQuote
+              </h2>
+              <button
+                onClick={() => setShowAndroidModal(false)}
+                className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+              >
+                <X className="h-5 w-5 text-slate-400" />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              <p className="text-slate-300 text-sm">
+                Install InstaQuote on your Android for quick access:
+              </p>
+              
+              <div className="space-y-3">
+                <Step number={1}>
+                  Tap the <span className="text-slate-100 font-medium">⋮</span> menu button in Chrome (top right)
+                </Step>
+                <Step number={2}>
+                  Tap <span className="text-slate-100 font-medium">&quot;Add to Home screen&quot;</span> or <span className="text-slate-100 font-medium">&quot;Install app&quot;</span>
+                </Step>
+                <Step number={3}>
+                  Tap <span className="text-blue-400 font-medium">&quot;Add&quot;</span> to confirm
+                </Step>
+              </div>
+
+              <div className="pt-2">
+                <Button
+                  onClick={() => setShowAndroidModal(false)}
                   className="w-full bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700"
                 >
                   Got it!
