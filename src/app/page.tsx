@@ -99,7 +99,7 @@ export default function HomePage() {
         </div>
 
         {/* CTA */}
-        <div className="mt-8 space-y-3">
+        <div className="mt-8">
           <Link href="/new-quote">
             <Button size="lg" className="w-full group bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg shadow-amber-500/25">
               <Calculator className="h-5 w-5 mr-2" />
@@ -107,6 +107,10 @@ export default function HomePage() {
               <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
             </Button>
           </Link>
+        </div>
+
+        {/* Install App */}
+        <div className="mt-6 mb-8">
           <InstallButton />
         </div>
       </main>

@@ -79,7 +79,7 @@ export function InstallButton() {
 
       {/* iOS Instructions Modal */}
       {showIOSModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 pb-28">
           <div className="bg-slate-800 rounded-2xl w-full max-w-md border border-slate-700 shadow-xl animate-in slide-in-from-bottom-4 duration-300">
             <div className="flex items-center justify-between p-4 border-b border-slate-700">
               <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
@@ -125,7 +125,7 @@ export function InstallButton() {
 
       {/* Android Instructions Modal */}
       {showAndroidModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 pb-28">
           <div className="bg-slate-800 rounded-2xl w-full max-w-md border border-slate-700 shadow-xl animate-in slide-in-from-bottom-4 duration-300">
             <div className="flex items-center justify-between p-4 border-b border-slate-700">
               <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
