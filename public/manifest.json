@@ -1,6 +1,6 @@
 {
-  "name": "GardenQuote",
-  "short_name": "GardenQuote",
+  "name": "InstaQuote",
+  "short_name": "InstaQuote",
   "description": "Mobile-first estimator for landscapers and gardeners",
   "start_url": "/",
   "display": "standalone",
