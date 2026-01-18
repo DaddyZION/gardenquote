@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { BottomNav } from "@/components/BottomNav";
 import { FeedbackButton } from "@/components/FeedbackButton";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
@@ -52,6 +53,7 @@ export default function RootLayout({
         <FeedbackButton />
         <BottomNav />
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
