@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { BottomNav } from "@/components/BottomNav";
 import { FeedbackButton } from "@/components/FeedbackButton";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
+import { LocaleProvider } from "@/contexts/LocaleContext";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -45,12 +46,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-900 text-slate-100`}
       >
-        <AnimatedBackground />
-        <div className="relative min-h-screen pb-24">
-          {children}
-        </div>
-        <FeedbackButton />
-        <BottomNav />
+        <LocaleProvider>
+          <AnimatedBackground />
+          <div className="relative min-h-screen pb-24">
+            {children}
+          </div>
+          <FeedbackButton />
+          <BottomNav />
+        </LocaleProvider>
         <Analytics />
       </body>
     </html>

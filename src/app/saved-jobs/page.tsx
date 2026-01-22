@@ -5,10 +5,11 @@ import { Header } from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FolderOpen, Trash2, Send, Calendar, Ruler } from "lucide-react";
-import { generateWhatsAppUrl } from "@/utils/calculations";
+import { useLocale } from "@/contexts/LocaleContext";
 import type { SavedQuote } from "@/components/Estimator";
 
 export default function SavedJobsPage() {
+  const { formatCurrency, t, language } = useLocale();
   const [savedQuotes, setSavedQuotes] = useState<SavedQuote[]>([]);
   const [mounted, setMounted] = useState(false);
 
@@ -32,18 +33,28 @@ export default function SavedJobsPage() {
   }, [savedQuotes]);
 
   const handleWhatsApp = useCallback((quote: SavedQuote) => {
-    const url = generateWhatsAppUrl({
-      area: quote.results.area,
-      slabs: quote.results.slabs600x600,
-      subBase: quote.results.subBaseTonnes,
-      sand: quote.results.sandTonnes,
-      clientPrice: quote.quote.clientPrice,
-    });
+    const message = `⚡ InstaQuote Estimate ⚡
+
+📐 ${t("area")}: ${quote.results.area}m²
+
+📦 ${t("materialsRequired")}:
+• ${t("slabs")}: ${quote.results.slabs600x600} pcs
+• ${t("subBase")}: ${quote.results.subBaseTonnes} tonnes
+• ${t("sand")}: ${quote.results.sandTonnes} tonnes
+
+💰 ${t("clientPrice")}: ${formatCurrency(quote.quote.clientPrice)}
+
+${t("validFor14Days")}`;
+
+    const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
     window.open(url, "_blank");
-  }, []);
+  }, [formatCurrency, t]);
 
   const formatDate = (timestamp: number) => {
-    return new Date(timestamp).toLocaleDateString("en-GB", {
+    const localeMap: Record<string, string> = {
+      en: "en-GB", es: "es-ES", fr: "fr-FR", de: "de-DE", pt: "pt-BR",
+    };
+    return new Date(timestamp).toLocaleDateString(localeMap[language] || "en-GB", {
       day: "numeric",
       month: "short",
       year: "numeric",
@@ -72,7 +83,7 @@ export default function SavedJobsPage() {
   return (
     <>
       <Header
-        title="Saved Jobs"
+        title={t("savedJobs")}
         subtitle={`${savedQuotes.length} quote${savedQuotes.length !== 1 ? "s" : ""} saved`}
         icon={<FolderOpen className="h-6 w-6" />}
       />
@@ -106,7 +117,7 @@ export default function SavedJobsPage() {
                       <span>{quote.results.area}m²</span>
                     </div>
                     <span className="text-2xl font-bold text-emerald-400">
-                      £{quote.quote.clientPrice.toFixed(2)}
+                      {formatCurrency(quote.quote.clientPrice)}
                     </span>
                   </CardTitle>
                 </CardHeader>

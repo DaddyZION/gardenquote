@@ -4,27 +4,35 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, PlusCircle, FolderOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLocale, type TranslationKey } from "@/contexts/LocaleContext";
 
-const navItems = [
+interface NavItem {
+  href: string;
+  labelKey: TranslationKey;
+  icon: typeof Home;
+}
+
+const navItems: NavItem[] = [
   {
     href: "/",
-    label: "Home",
+    labelKey: "appTitle",
     icon: Home,
   },
   {
     href: "/new-quote",
-    label: "New Quote",
+    labelKey: "newQuote",
     icon: PlusCircle,
   },
   {
     href: "/saved-jobs",
-    label: "Saved Jobs",
+    labelKey: "savedJobs",
     icon: FolderOpen,
   },
 ];
 
 export function BottomNav() {
   const pathname = usePathname();
+  const { t } = useLocale();
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-slate-900/90 backdrop-blur-xl border-t border-slate-800/50 safe-area-inset-bottom">
@@ -62,7 +70,7 @@ export function BottomNav() {
                   isActive && "font-semibold text-amber-500"
                 )}
               >
-                {item.label}
+                {t(item.labelKey)}
               </span>
             </Link>
           );

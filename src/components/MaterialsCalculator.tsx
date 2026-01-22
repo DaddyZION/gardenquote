@@ -9,6 +9,7 @@ import {
   MATERIAL_PRICES,
   type CalculationResults 
 } from "@/utils/calculations";
+import { useLocale } from "@/contexts/LocaleContext";
 import { 
   Package,
   ChevronDown,
@@ -91,6 +92,7 @@ const EXTRA_MATERIALS = [
 ];
 
 export function MaterialsCalculator({ results, onTotalChange }: MaterialsCalculatorProps) {
+  const { formatCurrency, currencySymbol, t } = useLocale();
   const [isExpanded, setIsExpanded] = useState(false);
   const [materials, setMaterials] = useState<MaterialItem[]>([]);
   const [showAddMenu, setShowAddMenu] = useState(false);
@@ -194,8 +196,8 @@ export function MaterialsCalculator({ results, onTotalChange }: MaterialsCalcula
         {/* Collapsed view - just show total */}
         {!isExpanded && (
           <div className="flex items-center justify-between py-2">
-            <span className="text-slate-400">Estimated Materials Cost:</span>
-            <span className="text-xl font-bold text-amber-400">£{total.toFixed(2)}</span>
+            <span className="text-slate-400">{t("materials")}:</span>
+            <span className="text-xl font-bold text-amber-400">{formatCurrency(total)}</span>
           </div>
         )}
 
@@ -237,7 +239,7 @@ export function MaterialsCalculator({ results, onTotalChange }: MaterialsCalcula
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-slate-500 block mb-1">£ per {item.unit}</label>
+                      <label className="text-xs text-slate-500 block mb-1">{currencySymbol} per {item.unit}</label>
                       <input
                         type="text"
                         inputMode="decimal"
@@ -249,7 +251,7 @@ export function MaterialsCalculator({ results, onTotalChange }: MaterialsCalcula
                     <div>
                       <label className="text-xs text-slate-500 block mb-1">Subtotal</label>
                       <div className="h-10 bg-slate-800/50 border border-slate-700 rounded-lg px-3 flex items-center text-amber-400 font-semibold">
-                        £{((parseFloat(item.quantity) || 0) * (parseFloat(item.unitPrice) || 0)).toFixed(2)}
+                        {formatCurrency((parseFloat(item.quantity) || 0) * (parseFloat(item.unitPrice) || 0))}
                       </div>
                     </div>
                   </div>
@@ -290,7 +292,7 @@ export function MaterialsCalculator({ results, onTotalChange }: MaterialsCalcula
                         className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 text-sm flex justify-between items-center transition-colors"
                       >
                         <span>{extra.name}</span>
-                        <span className="text-xs text-slate-500">£{extra.unitPrice}/{extra.unit}</span>
+                        <span className="text-xs text-slate-500">{currencySymbol}{extra.unitPrice}/{extra.unit}</span>
                       </button>
                     ))}
                   </div>
@@ -322,17 +324,17 @@ export function MaterialsCalculator({ results, onTotalChange }: MaterialsCalcula
             <div className="bg-slate-700/50 rounded-xl p-4 space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-slate-400">Subtotal:</span>
-                <span className="text-slate-200">£{subtotal.toFixed(2)}</span>
+                <span className="text-slate-200">{formatCurrency(subtotal)}</span>
               </div>
               {includeVAT && (
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-400">VAT (20%):</span>
-                  <span className="text-slate-200">£{vatAmount.toFixed(2)}</span>
+                  <span className="text-slate-200">{formatCurrency(vatAmount)}</span>
                 </div>
               )}
               <div className="flex justify-between pt-2 border-t border-slate-600">
-                <span className="text-slate-200 font-semibold">Materials Total:</span>
-                <span className="text-xl font-bold text-amber-400">£{total.toFixed(2)}</span>
+                <span className="text-slate-200 font-semibold">{t("materials")} Total:</span>
+                <span className="text-xl font-bold text-amber-400">{formatCurrency(total)}</span>
               </div>
             </div>
           </div>

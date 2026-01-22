@@ -9,12 +9,12 @@ import { Button } from "@/components/ui/button";
 import { 
   calculateAll, 
   calculateQuote, 
-  generateWhatsAppUrl,
   type EstimatorInputs,
   type CalculationResults,
   type QuoteResults 
 } from "@/utils/calculations";
 import { MaterialsCalculator } from "@/components/MaterialsCalculator";
+import { useLocale } from "@/contexts/LocaleContext";
 import { 
   Ruler, 
   Layers, 
@@ -87,6 +87,9 @@ function calculateFencingCost(fenceLength: string, fenceHeight: "4ft" | "5ft" | 
 }
 
 export function Estimator({ onSaveQuote }: EstimatorProps) {
+  // Locale context for currency formatting
+  const { formatCurrency, currencySymbol, t } = useLocale();
+  
   // Input state
   const [length, setLength] = useState<string>("");
   const [width, setWidth] = useState<string>("");
@@ -249,16 +252,22 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
   const handleWhatsAppShare = useCallback(() => {
     if (!results || !quoteResults) return;
 
-    const url = generateWhatsAppUrl({
-      area: results.area,
-      slabs: results.slabs600x600,
-      subBase: results.subBaseTonnes,
-      sand: results.sandTonnes,
-      clientPrice: quoteResults.clientPrice,
-    });
+    const message = `⚡ InstaQuote Estimate ⚡
 
+📐 ${t("area")}: ${results.area}m²
+
+📦 ${t("materialsRequired")}:
+• ${t("slabs")}: ${results.slabs600x600} pcs
+• ${t("subBase")}: ${results.subBaseTonnes} tonnes
+• ${t("sand")}: ${results.sandTonnes} tonnes
+
+💰 ${t("clientPrice")}: ${formatCurrency(quoteResults.clientPrice)}
+
+${t("validFor14Days")}`;
+
+    const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
     window.open(url, "_blank");
-  }, [results, quoteResults]);
+  }, [results, quoteResults, formatCurrency, t]);
 
   const handleCopyToClipboard = useCallback(async () => {
     if (!results || !quoteResults) return;
@@ -266,33 +275,33 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
     // Build fencing section if applicable
     const fenceCalc = showFencing ? calculateFencingCost(fenceLength, fenceHeight, includeGravel) : null;
     const fencingSection = fenceCalc ? `
-🪵 Fencing (${fenceLength}m @ ${fenceHeight}):
-• Panels: ${fenceCalc.panels} pcs
-• Posts (${fenceCalc.postLength}): ${fenceCalc.posts} pcs
-• Postcrete: ${fenceCalc.postcrete} bags
-${fenceCalc.gravelBoards > 0 ? `• Gravel Boards: ${fenceCalc.gravelBoards} pcs\n` : ''}• Post Caps: ${fenceCalc.postCaps} pcs
-• Fencing Total: £${fenceCalc.totalCost.toFixed(2)}
+🪵 ${t("fencing")} (${fenceLength}m @ ${fenceHeight}):
+• ${t("panels")}: ${fenceCalc.panels} pcs
+• ${t("posts")} (${fenceCalc.postLength}): ${fenceCalc.posts} pcs
+• ${t("postcrete")}: ${fenceCalc.postcrete} bags
+${fenceCalc.gravelBoards > 0 ? `• ${t("gravelBoards")}: ${fenceCalc.gravelBoards} pcs\n` : ''}• ${t("postCaps")}: ${fenceCalc.postCaps} pcs
+• ${t("fencing")} Total: ${formatCurrency(fenceCalc.totalCost)}
 ` : '';
 
     const quoteText = `⚡ InstaQuote Estimate ⚡
 
-📐 Dimensions: ${length}m × ${width}m
-📏 Depth: ${DEPTH_OPTIONS[depthIndex]}cm
-📐 Area: ${results.area}m²
+📐 ${t("dimensions")}: ${length}m × ${width}m
+📏 ${t("depth")}: ${DEPTH_OPTIONS[depthIndex]}cm
+📐 ${t("area")}: ${results.area}m²
 
-📦 Materials Required:
-• Slabs (600x600): ${results.slabs600x600} pcs
-• Sub-base: ${results.subBaseTonnes} tonnes
-• Sand: ${results.sandTonnes} tonnes
-${results.skipsNeeded > 0 ? `• Skips needed: ${results.skipsNeeded}` : ''}
+📦 ${t("materialsRequired")}:
+• ${t("slabs")}: ${results.slabs600x600} pcs
+• ${t("subBase")}: ${results.subBaseTonnes} tonnes
+• ${t("sand")}: ${results.sandTonnes} tonnes
+${results.skipsNeeded > 0 ? `• ${t("skips")}: ${results.skipsNeeded}` : ''}
 ${fencingSection}
-💷 Quote Summary:
-• Materials: £${parseFloat(materialsCost).toFixed(2)}${fenceCalc ? `\n• Fencing: £${fenceCalc.totalCost.toFixed(2)}` : ''}
-• Labour (${daysEstimated} days @ £${dayRate}/day): £${quoteResults.laborCost.toFixed(2)}
-• Cost to You: £${quoteResults.totalCost.toFixed(2)}
-• Price to Client: £${quoteResults.clientPrice.toFixed(2)}
+💷 ${t("quoteSummary")}:
+• ${t("materials")}: ${formatCurrency(parseFloat(materialsCost))}${fenceCalc ? `\n• ${t("fencing")}: ${formatCurrency(fenceCalc.totalCost)}` : ''}
+• ${t("labourCost")} (${daysEstimated} ${t("days")} @ ${formatCurrency(parseFloat(dayRate))}/${t("days").slice(0,-1)}): ${formatCurrency(quoteResults.laborCost)}
+• ${t("totalCost")}: ${formatCurrency(quoteResults.totalCost)}
+• ${t("clientPrice")}: ${formatCurrency(quoteResults.clientPrice)}
 
-This quote is valid for 14 days.`;
+${t("validFor14Days")}`;
 
     try {
       await navigator.clipboard.writeText(quoteText);
@@ -309,7 +318,7 @@ This quote is valid for 14 days.`;
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
-  }, [results, quoteResults, length, width, depthIndex, materialsCost, dayRate, daysEstimated, showFencing, fenceLength, fenceHeight, includeGravel]);
+  }, [results, quoteResults, length, width, depthIndex, materialsCost, dayRate, daysEstimated, showFencing, fenceLength, fenceHeight, includeGravel, formatCurrency, t]);
 
   return (
     <div className="space-y-6 pb-6">
@@ -318,13 +327,13 @@ This quote is valid for 14 days.`;
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Ruler className="h-5 w-5 text-amber-500" />
-            Dimensions
+            {t("dimensions")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Length"
+              label={t("length")}
               unit="m"
               type="text"
               inputMode="decimal"
@@ -333,7 +342,7 @@ This quote is valid for 14 days.`;
               onChange={(e) => setLength(e.target.value)}
             />
             <Input
-              label="Width"
+              label={t("width")}
               unit="m"
               type="text"
               inputMode="decimal"
@@ -344,7 +353,7 @@ This quote is valid for 14 days.`;
           </div>
 
           <Slider
-            label="Depth"
+            label={t("depth")}
             unit="cm"
             value={[depthIndex]}
             onValueChange={(value) => setDepthIndex(value[0])}
@@ -360,7 +369,7 @@ This quote is valid for 14 days.`;
 
           <div className="pt-2">
             <Switch
-              label="Digging Out?"
+              label={t("diggingOut")}
               checked={diggingOut}
               onCheckedChange={setDiggingOut}
             />
@@ -368,7 +377,7 @@ This quote is valid for 14 days.`;
           
           <div className="pt-2 border-t border-slate-700">
             <Switch
-              label="Fencing?"
+              label={t("fencing")}
               checked={showFencing}
               onCheckedChange={setShowFencing}
             />
@@ -382,12 +391,12 @@ This quote is valid for 14 days.`;
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Fence className="h-5 w-5 text-amber-500" />
-              Fence Calculator
+              {t("fenceCalculator")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <Input
-              label="Fence Line Length"
+              label={t("fenceLength")}
               unit="m"
               type="text"
               inputMode="decimal"
@@ -398,7 +407,7 @@ This quote is valid for 14 days.`;
 
             <div>
               <label className="text-sm font-medium text-slate-300 block mb-2">
-                Fence Height
+                {t("fenceHeight")}
               </label>
               <div className="grid grid-cols-3 gap-2">
                 {(["4ft", "5ft", "6ft"] as const).map((h) => (
@@ -486,32 +495,32 @@ This quote is valid for 14 days.`;
                       <div className="border-t border-slate-600 pt-2 mt-2 space-y-1">
                         <p className="text-xs text-slate-500 mb-2">Estimated costs:</p>
                         <div className="flex justify-between text-xs">
-                          <span className="text-slate-500">Panels @ £{info.panelPrice}:</span>
-                          <span className="text-slate-400">£{panelCost.toFixed(2)}</span>
+                          <span className="text-slate-500">Panels @ {formatCurrency(info.panelPrice)}:</span>
+                          <span className="text-slate-400">{formatCurrency(panelCost)}</span>
                         </div>
                         <div className="flex justify-between text-xs">
-                          <span className="text-slate-500">Posts @ £{info.postPrice}:</span>
-                          <span className="text-slate-400">£{postCost.toFixed(2)}</span>
+                          <span className="text-slate-500">Posts @ {formatCurrency(info.postPrice)}:</span>
+                          <span className="text-slate-400">{formatCurrency(postCost)}</span>
                         </div>
                         <div className="flex justify-between text-xs">
-                          <span className="text-slate-500">Postcrete @ £7:</span>
-                          <span className="text-slate-400">£{postcreteCost.toFixed(2)}</span>
+                          <span className="text-slate-500">Postcrete @ {formatCurrency(7)}:</span>
+                          <span className="text-slate-400">{formatCurrency(postcreteCost)}</span>
                         </div>
                         {includeGravel && (
                           <div className="flex justify-between text-xs">
-                            <span className="text-slate-500">Gravel boards @ £12:</span>
-                            <span className="text-slate-400">£{gravelCost.toFixed(2)}</span>
+                            <span className="text-slate-500">Gravel boards @ {formatCurrency(12)}:</span>
+                            <span className="text-slate-400">{formatCurrency(gravelCost)}</span>
                           </div>
                         )}
                         <div className="flex justify-between text-xs">
-                          <span className="text-slate-500">Post caps @ £3:</span>
-                          <span className="text-slate-400">£{capsCost.toFixed(2)}</span>
+                          <span className="text-slate-500">Post caps @ {formatCurrency(3)}:</span>
+                          <span className="text-slate-400">{formatCurrency(capsCost)}</span>
                         </div>
                       </div>
                       
                       <div className="flex justify-between pt-2 border-t border-slate-600">
                         <span className="text-slate-200 font-semibold">Fencing Total:</span>
-                        <span className="text-lg font-bold text-amber-400">£{totalFenceCost.toFixed(2)}</span>
+                        <span className="text-lg font-bold text-amber-400">{formatCurrency(totalFenceCost)}</span>
                       </div>
                     </div>
                   );
@@ -612,8 +621,8 @@ This quote is valid for 14 days.`;
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <Input
-                label="Day Rate"
-                unit="£"
+                label={t("dayRate")}
+                unit={currencySymbol}
                 type="text"
                 inputMode="decimal"
                 placeholder="0"
@@ -621,7 +630,7 @@ This quote is valid for 14 days.`;
                 onChange={(e) => setDayRate(e.target.value)}
               />
               <Input
-                label="Days"
+                label={t("days")}
                 type="text"
                 inputMode="decimal"
                 placeholder="1"
@@ -633,27 +642,27 @@ This quote is valid for 14 days.`;
             {quoteResults && (
               <div className="space-y-3 pt-2">
                 <div className="flex justify-between items-center py-2 text-sm">
-                  <span className="text-slate-400">Materials Cost:</span>
+                  <span className="text-slate-400">{t("materials")}:</span>
                   <span className="font-semibold text-slate-200">
-                    £{parseFloat(materialsCost).toFixed(2)}
+                    {formatCurrency(parseFloat(materialsCost))}
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-2 text-sm">
-                  <span className="text-slate-400">Labour Cost:</span>
+                  <span className="text-slate-400">{t("labourCost")}:</span>
                   <span className="font-semibold text-slate-200">
-                    £{quoteResults.laborCost.toFixed(2)}
+                    {formatCurrency(quoteResults.laborCost)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-t border-slate-700">
-                  <span className="text-slate-300 font-medium">Cost to You:</span>
+                  <span className="text-slate-300 font-medium">{t("totalCost")}:</span>
                   <span className="text-xl font-bold text-slate-100">
-                    £{quoteResults.totalCost.toFixed(2)}
+                    {formatCurrency(quoteResults.totalCost)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-3 bg-emerald-900/50 border border-emerald-500/30 rounded-xl px-4 -mx-1">
-                  <span className="text-emerald-300 font-semibold">Price to Client:</span>
+                  <span className="text-emerald-300 font-semibold">{t("clientPrice")}:</span>
                   <span className="text-2xl font-bold text-emerald-400">
-                    £{quoteResults.clientPrice.toFixed(2)}
+                    {formatCurrency(quoteResults.clientPrice)}
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 text-center">

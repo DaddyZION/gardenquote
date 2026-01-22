@@ -4,8 +4,11 @@ import { Header } from "@/components/Header";
 import { Estimator, type SavedQuote } from "@/components/Estimator";
 import { Calculator } from "lucide-react";
 import { useCallback } from "react";
+import { useLocale } from "@/contexts/LocaleContext";
 
 export default function NewQuotePage() {
+  const { t } = useLocale();
+  
   const handleSaveQuote = useCallback((quote: SavedQuote) => {
     // Get existing saved quotes
     const existingStr = localStorage.getItem("pricer_saved");
@@ -24,8 +27,8 @@ export default function NewQuotePage() {
   return (
     <>
       <Header
-        title="New Quote"
-        subtitle="Enter job dimensions"
+        title={t("newQuote")}
+        subtitle={t("startFreshEstimate")}
         icon={<Calculator className="h-6 w-6" />}
       />
 

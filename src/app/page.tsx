@@ -1,20 +1,31 @@
+"use client";
+
 import { Header } from "@/components/Header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calculator, FolderOpen, Zap, Sparkles, Clock, Send, ArrowRight } from "lucide-react";
 import { InstallButton } from "@/components/InstallButton";
+import { LocaleSelector } from "@/components/LocaleSelector";
+import { useLocale } from "@/contexts/LocaleContext";
 import Link from "next/link";
 
 export default function HomePage() {
+  const { t } = useLocale();
+  
   return (
     <>
       <Header
-        title="InstaQuote"
-        subtitle="Your pocket estimator"
+        title={t("appTitle")}
+        subtitle={t("appSubtitle")}
         icon={<Zap className="h-7 w-7" />}
       />
 
       <main className="px-4 py-6 max-w-lg mx-auto">
+        {/* Locale Settings */}
+        <div className="mb-6">
+          <LocaleSelector />
+        </div>
+        
         {/* Hero Section */}
         <div className="text-center py-8">
           <div className="relative inline-flex items-center justify-center w-24 h-24 mb-6">
@@ -25,11 +36,10 @@ export default function HomePage() {
             </div>
           </div>
           <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500 mb-3">
-            Quick Quotes, On Site
+            {t("quickQuotes")}
           </h2>
           <p className="text-slate-400 max-w-xs mx-auto leading-relaxed">
-            Calculate materials, labour costs, and send professional quotes — 
-            all from your phone.
+            {t("realTimeCalc")} — {t("worksAnywhere")}
           </p>
         </div>
 
@@ -43,8 +53,8 @@ export default function HomePage() {
                   <Calculator className="h-7 w-7 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-bold text-slate-100">New Quote</h3>
-                  <p className="text-sm text-slate-400">Start a fresh estimate</p>
+                  <h3 className="text-lg font-bold text-slate-100">{t("newQuote")}</h3>
+                  <p className="text-sm text-slate-400">{t("startFreshEstimate")}</p>
                 </div>
                 <ArrowRight className="h-5 w-5 text-amber-500 group-hover:translate-x-1 transition-transform" />
               </CardContent>
@@ -59,8 +69,8 @@ export default function HomePage() {
                   <FolderOpen className="h-7 w-7 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-bold text-slate-100">Saved Jobs</h3>
-                  <p className="text-sm text-slate-400">View past estimates</p>
+                  <h3 className="text-lg font-bold text-slate-100">{t("savedJobs")}</h3>
+                  <p className="text-sm text-slate-400">{t("viewPastEstimates")}</p>
                 </div>
                 <ArrowRight className="h-5 w-5 text-emerald-500 group-hover:translate-x-1 transition-transform" />
               </CardContent>
@@ -73,26 +83,26 @@ export default function HomePage() {
           <div className="flex items-center gap-2 mb-6">
             <Sparkles className="h-4 w-4 text-amber-500" />
             <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">
-              Features
+              {t("features")}
             </h3>
           </div>
           <div className="grid grid-cols-3 gap-3">
             <FeatureCard
               icon={<Zap className="h-6 w-6" />}
-              title="Instant"
-              description="Real-time calculations"
+              title={t("instant")}
+              description={t("realTimeCalc")}
               color="amber"
             />
             <FeatureCard
               icon={<Clock className="h-6 w-6" />}
-              title="Offline"
-              description="Works anywhere"
+              title={t("offline")}
+              description={t("worksAnywhere")}
               color="blue"
             />
             <FeatureCard
               icon={<Send className="h-6 w-6" />}
-              title="Share"
-              description="WhatsApp ready"
+              title={t("share")}
+              description={t("whatsappReady")}
               color="emerald"
             />
           </div>
@@ -103,7 +113,7 @@ export default function HomePage() {
           <Link href="/new-quote">
             <Button size="lg" className="w-full group bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg shadow-amber-500/25">
               <Calculator className="h-5 w-5 mr-2" />
-              Start Estimating
+              {t("startEstimate")}
               <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
             </Button>
           </Link>
