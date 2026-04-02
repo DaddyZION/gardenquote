@@ -1,21 +1,32 @@
 // GardenQuote Calculation Utilities
 // All the "Secret Sauce" formulas for landscaping estimates
 
+export type SlabSize = "600x600" | "600x900";
+export type SandCementRatio = "3:1" | "4:1" | "5:1" | "6:1";
+
 export interface EstimatorInputs {
   length: number; // meters
   width: number; // meters
-  depth: number; // centimeters
+  excavationDepthMm: number; // millimeters
   diggingOut: boolean;
+  slabSize: SlabSize;
+  sandCementRatio: SandCementRatio;
 }
 
 export interface CalculationResults {
   area: number; // m²
-  volume: number; // m³
+  volume: number; // m³ (excavation volume)
   wasteVolume: number; // m³ (with bulking factor)
   skipsNeeded: number; // 6-yard skips
-  slabs600x600: number; // number of slabs
-  subBaseTonnes: number; // tonnes of limestone
-  sandTonnes: number; // tonnes of sand
+  slabCount: number; // number of slabs
+  slabSize: SlabSize;
+  motType1Tonnes: number; // tonnes of MOT Type 1
+  sandTonnes: number; // tonnes of sand (for mix)
+  cementBags: number; // 25kg bags of cement
+  sandCementRatio: SandCementRatio;
+  // Backward compat aliases
+  slabs600x600: number;
+  subBaseTonnes: number;
 }
 
 /**
@@ -27,10 +38,10 @@ export function calculateArea(length: number, width: number): number {
 
 /**
  * Calculate volume in cubic meters
- * Converts depth from cm to m
+ * Converts depth from mm to m
  */
-export function calculateVolume(area: number, depthCm: number): number {
-  return area * (depthCm / 100);
+export function calculateVolume(area: number, depthMm: number): number {
+  return area * (depthMm / 1000);
 }
 
 /**
@@ -51,32 +62,58 @@ export function calculateSkipsNeeded(wasteVolume: number): number {
 }
 
 /**
- * Calculate number of 600x600mm slabs needed
- * Each slab covers 0.36m² (0.6 x 0.6)
+ * Slab coverage areas in m²
+ */
+const SLAB_AREAS: Record<SlabSize, number> = {
+  "600x600": 0.36, // 0.6 x 0.6
+  "600x900": 0.54, // 0.6 x 0.9
+};
+
+/**
+ * Calculate number of slabs needed for the given slab size
  * Includes 10% extra for cuts and breakage
  */
-export function calculateSlabs(area: number): number {
-  const slabArea = 0.36; // m²
+export function calculateSlabs(area: number, slabSize: SlabSize = "600x600"): number {
+  const slabArea = SLAB_AREAS[slabSize];
   const wasteMultiplier = 1.1; // 10% extra
   return Math.ceil((area / slabArea) * wasteMultiplier);
 }
 
 /**
- * Calculate sub-base required in tonnes
- * Limestone density ~2.2 tonnes per m³
+ * Calculate MOT Type 1 sub-base required in tonnes
+ * MOT Type 1 density ~2.1 tonnes per m³
+ * Depth based on excavation minus slab thickness (~50mm) minus mortar bed (~30mm)
  */
-export function calculateSubBase(volume: number): number {
-  const limestoneDensity = 2.2;
-  return Number((volume * limestoneDensity).toFixed(2));
+export function calculateMOT(area: number, excavationDepthMm: number): number {
+  const motDepthMm = Math.max(0, excavationDepthMm - 50 - 30); // subtract slab + mortar bed
+  const motVolume = area * (motDepthMm / 1000);
+  const motDensity = 2.1;
+  return Number((motVolume * motDensity).toFixed(2));
 }
 
 /**
- * Calculate sand required in tonnes
- * Sharp sand density ~1.7 tonnes per m³
+ * Calculate sand and cement quantities for mortar bed
+ * Based on a 30mm mortar bed
+ * Sand density ~1.6 tonnes/m³, cement density ~1.5 tonnes/m³
  */
-export function calculateSand(volume: number): number {
-  const sandDensity = 1.7;
-  return Number((volume * sandDensity).toFixed(2));
+export function calculateSandCement(
+  area: number,
+  ratio: SandCementRatio
+): { sandTonnes: number; cementBags: number } {
+  const bedDepthMm = 30; // standard mortar bed
+  const bedVolume = area * (bedDepthMm / 1000); // m³
+
+  const ratioParts = parseInt(ratio.split(":")[0]); // e.g. 4 from "4:1"
+  const totalParts = ratioParts + 1;
+
+  const sandVolume = bedVolume * (ratioParts / totalParts);
+  const cementVolume = bedVolume * (1 / totalParts);
+
+  const sandTonnes = Number((sandVolume * 1.6).toFixed(2));
+  const cementKg = cementVolume * 1500;
+  const cementBags = Math.ceil(cementKg / 25); // 25kg bags
+
+  return { sandTonnes, cementBags };
 }
 
 /**
@@ -84,21 +121,27 @@ export function calculateSand(volume: number): number {
  */
 export function calculateAll(inputs: EstimatorInputs): CalculationResults {
   const area = calculateArea(inputs.length, inputs.width);
-  const volume = calculateVolume(area, inputs.depth);
+  const volume = calculateVolume(area, inputs.excavationDepthMm);
   const wasteVolume = calculateWasteVolume(volume, inputs.diggingOut);
   const skipsNeeded = calculateSkipsNeeded(wasteVolume);
-  const slabs600x600 = calculateSlabs(area);
-  const subBaseTonnes = calculateSubBase(volume);
-  const sandTonnes = calculateSand(volume);
+  const slabCount = calculateSlabs(area, inputs.slabSize);
+  const motType1Tonnes = calculateMOT(area, inputs.excavationDepthMm);
+  const { sandTonnes, cementBags } = calculateSandCement(area, inputs.sandCementRatio);
 
   return {
     area: Number(area.toFixed(2)),
     volume: Number(volume.toFixed(3)),
     wasteVolume: Number(wasteVolume.toFixed(3)),
     skipsNeeded,
-    slabs600x600,
-    subBaseTonnes,
+    slabCount,
+    slabSize: inputs.slabSize,
+    motType1Tonnes,
     sandTonnes,
+    cementBags,
+    sandCementRatio: inputs.sandCementRatio,
+    // Backward compat
+    slabs600x600: slabCount,
+    subBaseTonnes: motType1Tonnes,
   };
 }
 
@@ -107,21 +150,27 @@ export function calculateAll(inputs: EstimatorInputs): CalculationResults {
  */
 export const MATERIAL_PRICES = {
   slabPer600x600: 3.50, // £ per slab
-  subBasePerTonne: 30, // £ per tonne of limestone
+  slabPer600x900: 5.50, // £ per slab
+  motType1PerTonne: 28, // £ per tonne of MOT Type 1
   sandPerTonne: 45, // £ per tonne of sharp sand
+  cementPerBag: 6.50, // £ per 25kg bag
   skipHire6Yard: 250, // £ per 6-yard skip
+  // Legacy aliases
+  subBasePerTonne: 28,
 };
 
 /**
  * Estimate materials cost based on calculated quantities
  */
 export function estimateMaterialsCost(results: CalculationResults): number {
-  const slabsCost = results.slabs600x600 * MATERIAL_PRICES.slabPer600x600;
-  const subBaseCost = results.subBaseTonnes * MATERIAL_PRICES.subBasePerTonne;
+  const slabPrice = results.slabSize === "600x900" ? MATERIAL_PRICES.slabPer600x900 : MATERIAL_PRICES.slabPer600x600;
+  const slabsCost = results.slabCount * slabPrice;
+  const motCost = results.motType1Tonnes * MATERIAL_PRICES.motType1PerTonne;
   const sandCost = results.sandTonnes * MATERIAL_PRICES.sandPerTonne;
+  const cementCost = results.cementBags * MATERIAL_PRICES.cementPerBag;
   const skipCost = results.skipsNeeded * MATERIAL_PRICES.skipHire6Yard;
 
-  return Number((slabsCost + subBaseCost + sandCost + skipCost).toFixed(2));
+  return Number((slabsCost + motCost + sandCost + cementCost + skipCost).toFixed(2));
 }
 
 /**
@@ -157,8 +206,11 @@ export function calculateQuote(inputs: QuoteInputs): QuoteResults {
 export function generateWhatsAppUrl(quote: {
   area: number;
   slabs: number;
-  subBase: number;
+  slabSize: string;
+  motType1: number;
   sand: number;
+  cementBags: number;
+  sandCementRatio: string;
   clientPrice: number;
 }): string {
   const message = `⚡ InstaQuote Estimate ⚡
@@ -166,9 +218,10 @@ export function generateWhatsAppUrl(quote: {
 📐 Area: ${quote.area}m²
 
 📦 Materials Required:
-• Slabs (600x600): ${quote.slabs} pcs
-• Sub-base: ${quote.subBase} tonnes
-• Sand: ${quote.sand} tonnes
+• Slabs (${quote.slabSize}): ${quote.slabs} pcs
+• MOT Type 1: ${quote.motType1} tonnes
+• Sand (${quote.sandCementRatio} mix): ${quote.sand} tonnes
+• Cement: ${quote.cementBags} × 25kg bags
 
 💰 Total Price: £${quote.clientPrice.toFixed(2)}
 

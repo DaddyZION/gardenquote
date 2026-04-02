@@ -137,13 +137,13 @@ ${t("validFor14Days")}`;
                       <p className="font-semibold text-slate-200">{quote.inputs.width}m</p>
                     </div>
                     <div className="bg-slate-700/50 rounded-lg p-2 text-center">
-                      <p className="text-xs text-slate-400">Depth</p>
-                      <p className="font-semibold text-slate-200">{quote.inputs.depth}cm</p>
+                      <p className="text-xs text-slate-400">Excavation</p>
+                      <p className="font-semibold text-slate-200">{quote.inputs.excavationDepthMm}mm</p>
                     </div>
                   </div>
 
                   <div className="text-xs text-slate-400 space-y-1 mb-4">
-                    <p>Slabs: {quote.results.slabs600x600} pcs • Sub-base: {quote.results.subBaseTonnes}t • Sand: {quote.results.sandTonnes}t</p>
+                    <p>Slabs ({quote.results.slabSize}): {quote.results.slabCount} pcs • MOT Type 1: {quote.results.motType1Tonnes}t • Sand: {quote.results.sandTonnes}t • Cement: {quote.results.cementBags} bags</p>
                     {quote.inputs.diggingOut && (
                       <p className="text-red-400">🪓 Digging out • {quote.results.skipsNeeded} skip(s) needed</p>
                     )}

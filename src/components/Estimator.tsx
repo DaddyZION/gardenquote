@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,9 @@ import {
   calculateQuote, 
   type EstimatorInputs,
   type CalculationResults,
-  type QuoteResults 
+  type QuoteResults,
+  type SlabSize,
+  type SandCementRatio,
 } from "@/utils/calculations";
 import { MaterialsCalculator } from "@/components/MaterialsCalculator";
 import { useLocale } from "@/contexts/LocaleContext";
@@ -27,11 +28,15 @@ import {
   Copy,
   Check,
   Fence,
-  X
+  X,
+  Hammer
 } from "lucide-react";
 
-// Depth options in cm (up to 1.5m)
-const DEPTH_OPTIONS = [5, 10, 15, 20, 25, 30, 40, 50, 75, 100, 150];
+// Slab size options
+const SLAB_SIZES: SlabSize[] = ["600x600", "600x900"];
+
+// Sand/cement mix ratios
+const MIX_RATIOS: SandCementRatio[] = ["3:1", "4:1", "5:1", "6:1"];
 
 interface SavedQuote {
   id: string;
@@ -93,8 +98,10 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
   // Input state
   const [length, setLength] = useState<string>("");
   const [width, setWidth] = useState<string>("");
-  const [depthIndex, setDepthIndex] = useState<number>(1); // Default to 10cm
+  const [excavationDepthMm, setExcavationDepthMm] = useState<string>("");
   const [diggingOut, setDiggingOut] = useState<boolean>(false);
+  const [slabSize, setSlabSize] = useState<SlabSize>("600x600");
+  const [sandCementRatio, setSandCementRatio] = useState<SandCementRatio>("4:1");
   
   // Fence calculator state
   const [showFencing, setShowFencing] = useState<boolean>(false);
@@ -130,8 +137,10 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
         const data = JSON.parse(saved);
         setLength(data.length || "");
         setWidth(data.width || "");
-        setDepthIndex(data.depthIndex ?? 1);
+        setExcavationDepthMm(data.excavationDepthMm || "");
         setDiggingOut(data.diggingOut ?? false);
+        setSlabSize(data.slabSize || "600x600");
+        setSandCementRatio(data.sandCementRatio || "4:1");
         setDayRate(data.dayRate || "250");
         setDaysEstimated(data.daysEstimated || "1");
         setMaterialsCost(data.materialsCost || "0");
@@ -146,14 +155,16 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
     const data = {
       length,
       width,
-      depthIndex,
+      excavationDepthMm,
       diggingOut,
+      slabSize,
+      sandCementRatio,
       dayRate,
       daysEstimated,
       materialsCost,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }, [length, width, depthIndex, diggingOut, dayRate, daysEstimated, materialsCost]);
+  }, [length, width, excavationDepthMm, diggingOut, slabSize, sandCementRatio, dayRate, daysEstimated, materialsCost]);
 
   // Callback for materials calculator total change
   const handleMaterialsCostChange = useCallback((total: number) => {
@@ -164,20 +175,23 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
   useEffect(() => {
     const lengthNum = parseFloat(length) || 0;
     const widthNum = parseFloat(width) || 0;
+    const depthMm = parseFloat(excavationDepthMm) || 0;
 
     if (lengthNum > 0 && widthNum > 0) {
       const inputs: EstimatorInputs = {
         length: lengthNum,
         width: widthNum,
-        depth: DEPTH_OPTIONS[depthIndex],
+        excavationDepthMm: depthMm,
         diggingOut,
+        slabSize,
+        sandCementRatio,
       };
       const calcResults = calculateAll(inputs);
       setResults(calcResults);
     } else {
       setResults(null);
     }
-  }, [length, width, depthIndex, diggingOut]);
+  }, [length, width, excavationDepthMm, diggingOut, slabSize, sandCementRatio]);
 
   // Update fencing cost when fence inputs change
   useEffect(() => {
@@ -210,8 +224,10 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
   const handleReset = useCallback(() => {
     setLength("");
     setWidth("");
-    setDepthIndex(1);
+    setExcavationDepthMm("");
     setDiggingOut(false);
+    setSlabSize("600x600");
+    setSandCementRatio("4:1");
     setDayRate("250");
     setDaysEstimated("1");
     setMaterialsCost("0");
@@ -234,8 +250,10 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
       inputs: {
         length: parseFloat(length) || 0,
         width: parseFloat(width) || 0,
-        depth: DEPTH_OPTIONS[depthIndex],
+        excavationDepthMm: parseFloat(excavationDepthMm) || 0,
         diggingOut,
+        slabSize,
+        sandCementRatio,
       },
       results,
       quote: quoteResults,
@@ -247,7 +265,7 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
     onSaveQuote?.(savedQuote);
     setShowSaveModal(false);
     setQuoteName("");
-  }, [results, quoteResults, quoteName, length, width, depthIndex, diggingOut, dayRate, daysEstimated, materialsCost, onSaveQuote]);
+  }, [results, quoteResults, quoteName, length, width, excavationDepthMm, diggingOut, slabSize, sandCementRatio, dayRate, daysEstimated, materialsCost, onSaveQuote]);
 
   const handleWhatsAppShare = useCallback(() => {
     if (!results || !quoteResults) return;
@@ -257,9 +275,10 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
 📐 ${t("area")}: ${results.area}m²
 
 📦 ${t("materialsRequired")}:
-• ${t("slabs")}: ${results.slabs600x600} pcs
-• ${t("subBase")}: ${results.subBaseTonnes} tonnes
-• ${t("sand")}: ${results.sandTonnes} tonnes
+• ${t("slabs")} (${results.slabSize}): ${results.slabCount} pcs
+• MOT Type 1: ${results.motType1Tonnes} tonnes
+• ${t("sand")} (${results.sandCementRatio} mix): ${results.sandTonnes} tonnes
+• Cement: ${results.cementBags} × 25kg bags
 
 💰 ${t("clientPrice")}: ${formatCurrency(quoteResults.clientPrice)}
 
@@ -286,13 +305,14 @@ ${fenceCalc.gravelBoards > 0 ? `• ${t("gravelBoards")}: ${fenceCalc.gravelBoar
     const quoteText = `⚡ InstaQuote Estimate ⚡
 
 📐 ${t("dimensions")}: ${length}m × ${width}m
-📏 ${t("depth")}: ${DEPTH_OPTIONS[depthIndex]}cm
+📱 Excavation: ${excavationDepthMm}mm
 📐 ${t("area")}: ${results.area}m²
 
 📦 ${t("materialsRequired")}:
-• ${t("slabs")}: ${results.slabs600x600} pcs
-• ${t("subBase")}: ${results.subBaseTonnes} tonnes
-• ${t("sand")}: ${results.sandTonnes} tonnes
+• ${t("slabs")} (${results.slabSize}): ${results.slabCount} pcs
+• MOT Type 1: ${results.motType1Tonnes} tonnes
+• ${t("sand")} (${results.sandCementRatio} mix): ${results.sandTonnes} tonnes
+• Cement: ${results.cementBags} × 25kg bags
 ${results.skipsNeeded > 0 ? `• ${t("skips")}: ${results.skipsNeeded}` : ''}
 ${fencingSection}
 💷 ${t("quoteSummary")}:
@@ -318,7 +338,7 @@ ${t("validFor14Days")}`;
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
-  }, [results, quoteResults, length, width, depthIndex, materialsCost, dayRate, daysEstimated, showFencing, fenceLength, fenceHeight, includeGravel, formatCurrency, t]);
+  }, [results, quoteResults, length, width, excavationDepthMm, materialsCost, dayRate, daysEstimated, showFencing, fenceLength, fenceHeight, includeGravel, formatCurrency, t]);
 
   return (
     <div className="space-y-6 pb-6">
@@ -337,7 +357,7 @@ ${t("validFor14Days")}`;
               unit="m"
               type="text"
               inputMode="decimal"
-              placeholder="0.0"
+              placeholder="4.56"
               value={length}
               onChange={(e) => setLength(e.target.value)}
             />
@@ -346,25 +366,66 @@ ${t("validFor14Days")}`;
               unit="m"
               type="text"
               inputMode="decimal"
-              placeholder="0.0"
+              placeholder="9.71"
               value={width}
               onChange={(e) => setWidth(e.target.value)}
             />
           </div>
 
-          <Slider
-            label={t("depth")}
-            unit="cm"
-            value={[depthIndex]}
-            onValueChange={(value) => setDepthIndex(value[0])}
-            min={0}
-            max={DEPTH_OPTIONS.length - 1}
-            step={1}
+          {/* Slab Size Selector */}
+          <div>
+            <label className="text-sm font-medium text-slate-300 block mb-2">
+              Slab Size
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {SLAB_SIZES.map((size) => (
+                <button
+                  key={size}
+                  onClick={() => setSlabSize(size)}
+                  className={`py-3 px-4 rounded-xl text-sm font-medium transition-all touch-manipulation ${
+                    slabSize === size
+                      ? "bg-amber-500 text-slate-900"
+                      : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                  }`}
+                >
+                  {size.replace("x", " × ")}mm
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Excavation Depth in mm */}
+          <Input
+            label="Excavation Depth"
+            unit="mm"
+            type="text"
+            inputMode="numeric"
+            placeholder="150"
+            value={excavationDepthMm}
+            onChange={(e) => setExcavationDepthMm(e.target.value)}
           />
-          <div className="flex justify-between text-xs text-slate-500 -mt-2 px-1 overflow-x-auto">
-            {DEPTH_OPTIONS.map((d, i) => (
-              <span key={d} className={i === depthIndex ? "text-amber-500 font-bold" : ""}>{d >= 100 ? `${d/100}m` : d}</span>
-            ))}
+
+          {/* Sand/Cement Mix Ratio */}
+          <div>
+            <label className="text-sm font-medium text-slate-300 block mb-2">
+              Sand/Cement Mix Ratio
+            </label>
+            <div className="grid grid-cols-4 gap-2">
+              {MIX_RATIOS.map((ratio) => (
+                <button
+                  key={ratio}
+                  onClick={() => setSandCementRatio(ratio)}
+                  className={`py-3 px-3 rounded-xl text-sm font-medium transition-all touch-manipulation ${
+                    sandCementRatio === ratio
+                      ? "bg-amber-500 text-slate-900"
+                      : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                  }`}
+                >
+                  {ratio}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-slate-500 mt-1">Sand : Cement (sand is the majority)</p>
           </div>
 
           <div className="pt-2">
@@ -561,20 +622,25 @@ ${t("validFor14Days")}`;
             </h4>
             <div className="space-y-3">
               <MaterialItem
-                label="Slabs (600x600)"
-                value={results.slabs600x600}
+                label={`Slabs (${results.slabSize.replace("x", " × ")}mm)`}
+                value={results.slabCount}
                 unit="pcs"
                 note="Includes 10% for cuts"
               />
               <MaterialItem
-                label="Sub-base (Limestone)"
-                value={results.subBaseTonnes}
+                label="MOT Type 1"
+                value={results.motType1Tonnes}
                 unit="tonnes"
               />
               <MaterialItem
-                label="Sharp Sand"
+                label={`Sand (${results.sandCementRatio} mix)`}
                 value={results.sandTonnes}
                 unit="tonnes"
+              />
+              <MaterialItem
+                label="Cement (25kg bags)"
+                value={results.cementBags}
+                unit="bags"
               />
             </div>
 

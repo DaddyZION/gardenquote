@@ -36,27 +36,36 @@ interface MaterialsCalculatorProps {
 const getDefaultMaterials = (results: CalculationResults | null): MaterialItem[] => {
   if (!results) return [];
   
+  const slabPrice = results.slabSize === "600x900" ? MATERIAL_PRICES.slabPer600x900 : MATERIAL_PRICES.slabPer600x600;
+  
   return [
     {
       id: "slabs",
-      name: "Slabs (600x600)",
-      quantity: results.slabs600x600.toString(),
-      unitPrice: MATERIAL_PRICES.slabPer600x600.toString(),
+      name: `Slabs (${results.slabSize.replace("x", "×")})`,
+      quantity: results.slabCount.toString(),
+      unitPrice: slabPrice.toString(),
       unit: "pcs",
     },
     {
-      id: "subbase",
-      name: "Sub-base (Limestone)",
-      quantity: results.subBaseTonnes.toString(),
-      unitPrice: MATERIAL_PRICES.subBasePerTonne.toString(),
+      id: "mot",
+      name: "MOT Type 1",
+      quantity: results.motType1Tonnes.toString(),
+      unitPrice: MATERIAL_PRICES.motType1PerTonne.toString(),
       unit: "tonnes",
     },
     {
       id: "sand",
-      name: "Sharp Sand",
+      name: `Sand (${results.sandCementRatio} mix)`,
       quantity: results.sandTonnes.toString(),
       unitPrice: MATERIAL_PRICES.sandPerTonne.toString(),
       unit: "tonnes",
+    },
+    {
+      id: "cement",
+      name: "Cement (25kg bags)",
+      quantity: results.cementBags.toString(),
+      unitPrice: MATERIAL_PRICES.cementPerBag.toString(),
+      unit: "bags",
     },
     ...(results.skipsNeeded > 0
       ? [
@@ -103,7 +112,7 @@ export function MaterialsCalculator({ results, onTotalChange }: MaterialsCalcula
     if (results) {
       setMaterials(getDefaultMaterials(results));
     }
-  }, [results?.area, results?.slabs600x600, results?.subBaseTonnes, results?.sandTonnes, results?.skipsNeeded]);
+  }, [results?.area, results?.slabCount, results?.motType1Tonnes, results?.sandTonnes, results?.cementBags, results?.skipsNeeded, results?.slabSize, results?.sandCementRatio]);
 
   // Calculate total whenever materials change
   useEffect(() => {
