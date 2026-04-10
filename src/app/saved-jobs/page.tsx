@@ -145,7 +145,7 @@ ${t("validFor14Days")}`;
                   <div className="text-xs text-slate-400 space-y-1 mb-4">
                     <p>Slabs ({quote.results.slabSize}): {quote.results.slabCount} pcs • MOT Type 1: {quote.results.motType1Tonnes}t • Sand: {quote.results.sandTonnes}t • Cement: {quote.results.cementBags} bags</p>
                     {quote.inputs.diggingOut && (
-                      <p className="text-red-400">🪓 Digging out • {quote.results.skipsNeeded} skip(s) needed</p>
+                      <p className="text-red-400">🪓 Dig out: {quote.results.digOutVolume}m³ ({quote.results.wasteTonnes}t) • {quote.results.skipsNeeded} skip(s) needed</p>
                     )}
                   </div>
 

@@ -9,6 +9,9 @@ export interface EstimatorInputs {
   width: number; // meters
   excavationDepthMm: number; // millimeters
   diggingOut: boolean;
+  digOutLength: number; // meters
+  digOutWidth: number; // meters
+  digOutDepthMm: number; // millimeters
   slabSize: SlabSize;
   sandCementRatio: SandCementRatio;
 }
@@ -17,7 +20,10 @@ export interface CalculationResults {
   area: number; // m²
   volume: number; // m³ (excavation volume)
   wasteVolume: number; // m³ (with bulking factor)
+  wasteTonnes: number; // tonnes of waste
   skipsNeeded: number; // 6-yard skips
+  digOutArea: number; // m² of dig out
+  digOutVolume: number; // m³ raw dig out volume
   slabCount: number; // number of slabs
   slabSize: SlabSize;
   motType1Tonnes: number; // tonnes of MOT Type 1
@@ -46,19 +52,31 @@ export function calculateVolume(area: number, depthMm: number): number {
 
 /**
  * Calculate waste volume with bulking/expansion factor
+ * Uses separate dig-out dimensions (L × W × D)
  * Soil expands by ~30% when dug out
+ * Soil density ~1.8 tonnes/m³
  */
-export function calculateWasteVolume(volume: number, diggingOut: boolean): number {
-  if (!diggingOut) return 0;
-  return volume * 1.3; // 30% expansion factor
-}
-
-/**
- * Calculate number of 6-yard skips needed
- */
-export function calculateSkipsNeeded(wasteVolume: number): number {
-  if (wasteVolume === 0) return 0;
-  return Math.ceil(wasteVolume / 6);
+export function calculateDigOut(
+  diggingOut: boolean,
+  digOutLength: number,
+  digOutWidth: number,
+  digOutDepthMm: number
+): { digOutArea: number; digOutVolume: number; wasteVolume: number; wasteTonnes: number; skipsNeeded: number } {
+  if (!diggingOut || digOutLength <= 0 || digOutWidth <= 0 || digOutDepthMm <= 0) {
+    return { digOutArea: 0, digOutVolume: 0, wasteVolume: 0, wasteTonnes: 0, skipsNeeded: 0 };
+  }
+  const digOutArea = digOutLength * digOutWidth;
+  const digOutVolume = digOutArea * (digOutDepthMm / 1000);
+  const wasteVolume = digOutVolume * 1.3; // 30% expansion
+  const wasteTonnes = Number((digOutVolume * 1.8).toFixed(2)); // soil density
+  const skipsNeeded = Math.ceil(wasteVolume / 6);
+  return {
+    digOutArea: Number(digOutArea.toFixed(2)),
+    digOutVolume: Number(digOutVolume.toFixed(3)),
+    wasteVolume: Number(wasteVolume.toFixed(3)),
+    wasteTonnes,
+    skipsNeeded,
+  };
 }
 
 /**
@@ -122,8 +140,12 @@ export function calculateSandCement(
 export function calculateAll(inputs: EstimatorInputs): CalculationResults {
   const area = calculateArea(inputs.length, inputs.width);
   const volume = calculateVolume(area, inputs.excavationDepthMm);
-  const wasteVolume = calculateWasteVolume(volume, inputs.diggingOut);
-  const skipsNeeded = calculateSkipsNeeded(wasteVolume);
+  const digOut = calculateDigOut(
+    inputs.diggingOut,
+    inputs.digOutLength,
+    inputs.digOutWidth,
+    inputs.digOutDepthMm
+  );
   const slabCount = calculateSlabs(area, inputs.slabSize);
   const motType1Tonnes = calculateMOT(area, inputs.excavationDepthMm);
   const { sandTonnes, cementBags } = calculateSandCement(area, inputs.sandCementRatio);
@@ -131,8 +153,11 @@ export function calculateAll(inputs: EstimatorInputs): CalculationResults {
   return {
     area: Number(area.toFixed(2)),
     volume: Number(volume.toFixed(3)),
-    wasteVolume: Number(wasteVolume.toFixed(3)),
-    skipsNeeded,
+    wasteVolume: digOut.wasteVolume,
+    wasteTonnes: digOut.wasteTonnes,
+    skipsNeeded: digOut.skipsNeeded,
+    digOutArea: digOut.digOutArea,
+    digOutVolume: digOut.digOutVolume,
     slabCount,
     slabSize: inputs.slabSize,
     motType1Tonnes,

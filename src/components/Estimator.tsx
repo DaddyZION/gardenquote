@@ -100,6 +100,9 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
   const [width, setWidth] = useState<string>("");
   const [excavationDepthMm, setExcavationDepthMm] = useState<string>("");
   const [diggingOut, setDiggingOut] = useState<boolean>(false);
+  const [digOutLength, setDigOutLength] = useState<string>("");
+  const [digOutWidth, setDigOutWidth] = useState<string>("");
+  const [digOutDepthMm, setDigOutDepthMm] = useState<string>("");
   const [slabSize, setSlabSize] = useState<SlabSize>("600x600");
   const [sandCementRatio, setSandCementRatio] = useState<SandCementRatio>("4:1");
   
@@ -139,6 +142,9 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
         setWidth(data.width || "");
         setExcavationDepthMm(data.excavationDepthMm || "");
         setDiggingOut(data.diggingOut ?? false);
+        setDigOutLength(data.digOutLength || "");
+        setDigOutWidth(data.digOutWidth || "");
+        setDigOutDepthMm(data.digOutDepthMm || "");
         setSlabSize(data.slabSize || "600x600");
         setSandCementRatio(data.sandCementRatio || "4:1");
         setDayRate(data.dayRate || "250");
@@ -157,6 +163,9 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
       width,
       excavationDepthMm,
       diggingOut,
+      digOutLength,
+      digOutWidth,
+      digOutDepthMm,
       slabSize,
       sandCementRatio,
       dayRate,
@@ -164,7 +173,7 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
       materialsCost,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }, [length, width, excavationDepthMm, diggingOut, slabSize, sandCementRatio, dayRate, daysEstimated, materialsCost]);
+  }, [length, width, excavationDepthMm, diggingOut, digOutLength, digOutWidth, digOutDepthMm, slabSize, sandCementRatio, dayRate, daysEstimated, materialsCost]);
 
   // Callback for materials calculator total change
   const handleMaterialsCostChange = useCallback((total: number) => {
@@ -183,6 +192,9 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
         width: widthNum,
         excavationDepthMm: depthMm,
         diggingOut,
+        digOutLength: parseFloat(digOutLength) || 0,
+        digOutWidth: parseFloat(digOutWidth) || 0,
+        digOutDepthMm: parseFloat(digOutDepthMm) || 0,
         slabSize,
         sandCementRatio,
       };
@@ -191,7 +203,7 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
     } else {
       setResults(null);
     }
-  }, [length, width, excavationDepthMm, diggingOut, slabSize, sandCementRatio]);
+  }, [length, width, excavationDepthMm, diggingOut, digOutLength, digOutWidth, digOutDepthMm, slabSize, sandCementRatio]);
 
   // Update fencing cost when fence inputs change
   useEffect(() => {
@@ -226,6 +238,9 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
     setWidth("");
     setExcavationDepthMm("");
     setDiggingOut(false);
+    setDigOutLength("");
+    setDigOutWidth("");
+    setDigOutDepthMm("");
     setSlabSize("600x600");
     setSandCementRatio("4:1");
     setDayRate("250");
@@ -252,6 +267,9 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
         width: parseFloat(width) || 0,
         excavationDepthMm: parseFloat(excavationDepthMm) || 0,
         diggingOut,
+        digOutLength: parseFloat(digOutLength) || 0,
+        digOutWidth: parseFloat(digOutWidth) || 0,
+        digOutDepthMm: parseFloat(digOutDepthMm) || 0,
         slabSize,
         sandCementRatio,
       },
@@ -265,7 +283,7 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
     onSaveQuote?.(savedQuote);
     setShowSaveModal(false);
     setQuoteName("");
-  }, [results, quoteResults, quoteName, length, width, excavationDepthMm, diggingOut, slabSize, sandCementRatio, dayRate, daysEstimated, materialsCost, onSaveQuote]);
+  }, [results, quoteResults, quoteName, length, width, excavationDepthMm, diggingOut, digOutLength, digOutWidth, digOutDepthMm, slabSize, sandCementRatio, dayRate, daysEstimated, materialsCost, onSaveQuote]);
 
   const handleWhatsAppShare = useCallback(() => {
     if (!results || !quoteResults) return;
@@ -279,7 +297,11 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
 • MOT Type 1: ${results.motType1Tonnes} tonnes
 • ${t("sand")} (${results.sandCementRatio} mix): ${results.sandTonnes} tonnes
 • Cement: ${results.cementBags} × 25kg bags
-
+${results.digOutVolume > 0 ? `
+🪓 Dig Out:
+• Volume: ${results.digOutVolume}m³ (${results.wasteTonnes}t)
+• Skips: ${results.skipsNeeded} × 6-yard
+` : ''}
 💰 ${t("clientPrice")}: ${formatCurrency(quoteResults.clientPrice)}
 
 ${t("validFor14Days")}`;
@@ -302,6 +324,14 @@ ${fenceCalc.gravelBoards > 0 ? `• ${t("gravelBoards")}: ${fenceCalc.gravelBoar
 • ${t("fencing")} Total: ${formatCurrency(fenceCalc.totalCost)}
 ` : '';
 
+    // Build dig-out section if applicable
+    const digOutSection = results.digOutVolume > 0 ? `
+🪓 Dig Out (${digOutLength}m × ${digOutWidth}m × ${digOutDepthMm}mm):
+• Volume: ${results.digOutVolume}m³
+• Waste (inc. bulking): ${results.wasteVolume}m³ (${results.wasteTonnes}t)
+• Skips: ${results.skipsNeeded} × 6-yard
+` : '';
+
     const quoteText = `⚡ InstaQuote Estimate ⚡
 
 📐 ${t("dimensions")}: ${length}m × ${width}m
@@ -314,7 +344,7 @@ ${fenceCalc.gravelBoards > 0 ? `• ${t("gravelBoards")}: ${fenceCalc.gravelBoar
 • ${t("sand")} (${results.sandCementRatio} mix): ${results.sandTonnes} tonnes
 • Cement: ${results.cementBags} × 25kg bags
 ${results.skipsNeeded > 0 ? `• ${t("skips")}: ${results.skipsNeeded}` : ''}
-${fencingSection}
+${digOutSection}${fencingSection}
 💷 ${t("quoteSummary")}:
 • ${t("materials")}: ${formatCurrency(parseFloat(materialsCost))}${fenceCalc ? `\n• ${t("fencing")}: ${formatCurrency(fenceCalc.totalCost)}` : ''}
 • ${t("labourCost")} (${daysEstimated} ${t("days")} @ ${formatCurrency(parseFloat(dayRate))}/${t("days").slice(0,-1)}): ${formatCurrency(quoteResults.laborCost)}
@@ -338,7 +368,7 @@ ${t("validFor14Days")}`;
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
-  }, [results, quoteResults, length, width, excavationDepthMm, materialsCost, dayRate, daysEstimated, showFencing, fenceLength, fenceHeight, includeGravel, formatCurrency, t]);
+  }, [results, quoteResults, length, width, excavationDepthMm, digOutLength, digOutWidth, digOutDepthMm, materialsCost, dayRate, daysEstimated, showFencing, fenceLength, fenceHeight, includeGravel, formatCurrency, t]);
 
   return (
     <div className="space-y-6 pb-6">
@@ -435,6 +465,69 @@ ${t("validFor14Days")}`;
               onCheckedChange={setDiggingOut}
             />
           </div>
+
+          {/* Dig Out Dimensions */}
+          {diggingOut && (
+            <div className="bg-red-900/20 border border-red-500/30 rounded-xl p-4 space-y-4">
+              <h4 className="text-sm font-semibold text-red-400 uppercase tracking-wide flex items-center gap-2">
+                <Shovel className="h-4 w-4" />
+                Dig Out Dimensions
+              </h4>
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  label={t("length")}
+                  unit="m"
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="0.0"
+                  value={digOutLength}
+                  onChange={(e) => setDigOutLength(e.target.value)}
+                />
+                <Input
+                  label={t("width")}
+                  unit="m"
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="0.0"
+                  value={digOutWidth}
+                  onChange={(e) => setDigOutWidth(e.target.value)}
+                />
+              </div>
+              <Input
+                label={t("depth")}
+                unit="mm"
+                type="text"
+                inputMode="numeric"
+                placeholder="150"
+                value={digOutDepthMm}
+                onChange={(e) => setDigOutDepthMm(e.target.value)}
+              />
+              {results && results.digOutVolume > 0 && (
+                <div className="bg-red-900/30 rounded-lg p-3 space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Dig Out Area:</span>
+                    <span className="text-slate-100 font-medium">{results.digOutArea}m²</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Dig Out Volume:</span>
+                    <span className="text-red-400 font-bold">{results.digOutVolume}m³</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Waste Volume (inc. bulking):</span>
+                    <span className="text-red-400 font-bold">{results.wasteVolume}m³</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Waste Tonnage:</span>
+                    <span className="text-red-400 font-bold">{results.wasteTonnes} tonnes</span>
+                  </div>
+                  <div className="flex justify-between pt-2 border-t border-red-500/30">
+                    <span className="text-slate-300 font-semibold">6-Yard Skips Needed:</span>
+                    <span className="text-lg font-bold text-red-400">{results.skipsNeeded}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           
           <div className="pt-2 border-t border-slate-700">
             <Switch
@@ -643,26 +736,6 @@ ${t("validFor14Days")}`;
                 unit="bags"
               />
             </div>
-
-            {diggingOut && results.wasteVolume > 0 && (
-              <>
-                <div className="border-t border-slate-700 my-4" />
-                <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">
-                  Waste Removal
-                </h4>
-                <div className="flex items-center gap-3 bg-red-900/30 border border-red-500/30 rounded-xl p-4">
-                  <Shovel className="h-6 w-6 text-red-400" />
-                  <div>
-                    <p className="text-sm text-slate-300">
-                      Waste Volume: <span className="font-bold text-red-400">{results.wasteVolume}m³</span>
-                    </p>
-                    <p className="text-lg font-bold text-slate-100">
-                      6-Yard Skips Needed: <span className="text-red-400">{results.skipsNeeded}</span>
-                    </p>
-                  </div>
-                </div>
-              </>
-            )}
           </CardContent>
         </Card>
       )}
