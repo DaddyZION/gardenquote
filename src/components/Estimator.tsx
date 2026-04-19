@@ -7,7 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
   calculateAll, 
-  calculateQuote, 
+  calculateQuote,
+  calculateDigOut,
+  SLAB_THICKNESS_MM,
   type EstimatorInputs,
   type CalculationResults,
   type QuoteResults,
@@ -98,12 +100,13 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
   // Input state
   const [length, setLength] = useState<string>("");
   const [width, setWidth] = useState<string>("");
-  const [excavationDepthMm, setExcavationDepthMm] = useState<string>("");
   const [diggingOut, setDiggingOut] = useState<boolean>(false);
   const [digOutLength, setDigOutLength] = useState<string>("");
   const [digOutWidth, setDigOutWidth] = useState<string>("");
   const [digOutDepthMm, setDigOutDepthMm] = useState<string>("");
   const [slabSize, setSlabSize] = useState<SlabSize>("600x600");
+  const [motDepthMm, setMotDepthMm] = useState<string>("100");
+  const [mortarDepthMm, setMortarDepthMm] = useState<string>("40");
   const [sandCementRatio, setSandCementRatio] = useState<SandCementRatio>("4:1");
   
   // Fence calculator state
@@ -140,12 +143,13 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
         const data = JSON.parse(saved);
         setLength(data.length || "");
         setWidth(data.width || "");
-        setExcavationDepthMm(data.excavationDepthMm || "");
         setDiggingOut(data.diggingOut ?? false);
         setDigOutLength(data.digOutLength || "");
         setDigOutWidth(data.digOutWidth || "");
         setDigOutDepthMm(data.digOutDepthMm || "");
         setSlabSize(data.slabSize || "600x600");
+        setMotDepthMm(data.motDepthMm || "100");
+        setMortarDepthMm(data.mortarDepthMm || "40");
         setSandCementRatio(data.sandCementRatio || "4:1");
         setDayRate(data.dayRate || "250");
         setDaysEstimated(data.daysEstimated || "1");
@@ -161,19 +165,20 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
     const data = {
       length,
       width,
-      excavationDepthMm,
       diggingOut,
       digOutLength,
       digOutWidth,
       digOutDepthMm,
       slabSize,
+      motDepthMm,
+      mortarDepthMm,
       sandCementRatio,
       dayRate,
       daysEstimated,
       materialsCost,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }, [length, width, excavationDepthMm, diggingOut, digOutLength, digOutWidth, digOutDepthMm, slabSize, sandCementRatio, dayRate, daysEstimated, materialsCost]);
+  }, [length, width, diggingOut, digOutLength, digOutWidth, digOutDepthMm, slabSize, motDepthMm, mortarDepthMm, sandCementRatio, dayRate, daysEstimated, materialsCost]);
 
   // Callback for materials calculator total change
   const handleMaterialsCostChange = useCallback((total: number) => {
@@ -184,18 +189,18 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
   useEffect(() => {
     const lengthNum = parseFloat(length) || 0;
     const widthNum = parseFloat(width) || 0;
-    const depthMm = parseFloat(excavationDepthMm) || 0;
 
     if (lengthNum > 0 && widthNum > 0) {
       const inputs: EstimatorInputs = {
         length: lengthNum,
         width: widthNum,
-        excavationDepthMm: depthMm,
         diggingOut,
         digOutLength: parseFloat(digOutLength) || 0,
         digOutWidth: parseFloat(digOutWidth) || 0,
         digOutDepthMm: parseFloat(digOutDepthMm) || 0,
         slabSize,
+        motDepthMm: parseFloat(motDepthMm) || 0,
+        mortarDepthMm: parseFloat(mortarDepthMm) || 0,
         sandCementRatio,
       };
       const calcResults = calculateAll(inputs);
@@ -203,7 +208,7 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
     } else {
       setResults(null);
     }
-  }, [length, width, excavationDepthMm, diggingOut, digOutLength, digOutWidth, digOutDepthMm, slabSize, sandCementRatio]);
+  }, [length, width, diggingOut, digOutLength, digOutWidth, digOutDepthMm, slabSize, motDepthMm, mortarDepthMm, sandCementRatio]);
 
   // Update fencing cost when fence inputs change
   useEffect(() => {
@@ -236,12 +241,13 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
   const handleReset = useCallback(() => {
     setLength("");
     setWidth("");
-    setExcavationDepthMm("");
     setDiggingOut(false);
     setDigOutLength("");
     setDigOutWidth("");
     setDigOutDepthMm("");
     setSlabSize("600x600");
+    setMotDepthMm("100");
+    setMortarDepthMm("40");
     setSandCementRatio("4:1");
     setDayRate("250");
     setDaysEstimated("1");
@@ -265,12 +271,13 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
       inputs: {
         length: parseFloat(length) || 0,
         width: parseFloat(width) || 0,
-        excavationDepthMm: parseFloat(excavationDepthMm) || 0,
         diggingOut,
         digOutLength: parseFloat(digOutLength) || 0,
         digOutWidth: parseFloat(digOutWidth) || 0,
         digOutDepthMm: parseFloat(digOutDepthMm) || 0,
         slabSize,
+        motDepthMm: parseFloat(motDepthMm) || 0,
+        mortarDepthMm: parseFloat(mortarDepthMm) || 0,
         sandCementRatio,
       },
       results,
@@ -283,7 +290,7 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
     onSaveQuote?.(savedQuote);
     setShowSaveModal(false);
     setQuoteName("");
-  }, [results, quoteResults, quoteName, length, width, excavationDepthMm, diggingOut, digOutLength, digOutWidth, digOutDepthMm, slabSize, sandCementRatio, dayRate, daysEstimated, materialsCost, onSaveQuote]);
+  }, [results, quoteResults, quoteName, length, width, diggingOut, digOutLength, digOutWidth, digOutDepthMm, slabSize, motDepthMm, mortarDepthMm, sandCementRatio, dayRate, daysEstimated, materialsCost, onSaveQuote]);
 
   const handleWhatsAppShare = useCallback(() => {
     if (!results || !quoteResults) return;
@@ -294,8 +301,8 @@ export function Estimator({ onSaveQuote }: EstimatorProps) {
 
 📦 ${t("materialsRequired")}:
 • ${t("slabs")} (${results.slabSize}): ${results.slabCount} pcs
-• MOT Type 1: ${results.motType1Tonnes} tonnes
-• ${t("sand")} (${results.sandCementRatio} mix): ${results.sandTonnes} tonnes
+• MOT Type 1 (${results.motDepthMm}mm): ${results.motType1Tonnes} tonnes
+• ${t("sand")} (${results.sandCementRatio} mix, ${results.mortarDepthMm}mm bed): ${results.sandTonnes} tonnes
 • Cement: ${results.cementBags} × 25kg bags
 ${results.digOutVolume > 0 ? `
 🪓 Dig Out:
@@ -335,8 +342,13 @@ ${fenceCalc.gravelBoards > 0 ? `• ${t("gravelBoards")}: ${fenceCalc.gravelBoar
     const quoteText = `⚡ InstaQuote Estimate ⚡
 
 📐 ${t("dimensions")}: ${length}m × ${width}m
-📱 Excavation: ${excavationDepthMm}mm
-📐 ${t("area")}: ${results.area}m²
+� ${t("area")}: ${results.area}m²
+
+🧱 Installation Build-up:
+• MOT Type 1: ${motDepthMm}mm
+• Mortar Bed: ${mortarDepthMm}mm (${results.sandCementRatio} mix)
+• Slab: ${SLAB_THICKNESS_MM}mm
+• Total Depth: ${results.totalDepthMm}mm
 
 📦 ${t("materialsRequired")}:
 • ${t("slabs")} (${results.slabSize}): ${results.slabCount} pcs
@@ -368,7 +380,7 @@ ${t("validFor14Days")}`;
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
-  }, [results, quoteResults, length, width, excavationDepthMm, digOutLength, digOutWidth, digOutDepthMm, materialsCost, dayRate, daysEstimated, showFencing, fenceLength, fenceHeight, includeGravel, formatCurrency, t]);
+  }, [results, quoteResults, length, width, motDepthMm, mortarDepthMm, digOutLength, digOutWidth, digOutDepthMm, materialsCost, dayRate, daysEstimated, showFencing, fenceLength, fenceHeight, includeGravel, formatCurrency, t]);
 
   return (
     <div className="space-y-6 pb-6">
@@ -424,38 +436,70 @@ ${t("validFor14Days")}`;
             </div>
           </div>
 
-          {/* Excavation Depth in mm */}
-          <Input
-            label="Excavation Depth"
-            unit="mm"
-            type="text"
-            inputMode="numeric"
-            placeholder="150"
-            value={excavationDepthMm}
-            onChange={(e) => setExcavationDepthMm(e.target.value)}
-          />
+          {/* Installation Dimensions */}
+          <div className="bg-amber-900/20 border border-amber-500/30 rounded-xl p-4 space-y-4">
+            <h4 className="text-sm font-semibold text-amber-400 uppercase tracking-wide flex items-center gap-2">
+              <Hammer className="h-4 w-4" />
+              Installation Build-up
+            </h4>
+            <p className="text-xs text-slate-500">From DPC down: MOT + mortar bed + slab ({SLAB_THICKNESS_MM}mm)</p>
 
-          {/* Sand/Cement Mix Ratio */}
-          <div>
-            <label className="text-sm font-medium text-slate-300 block mb-2">
-              Sand/Cement Mix Ratio
-            </label>
-            <div className="grid grid-cols-4 gap-2">
-              {MIX_RATIOS.map((ratio) => (
-                <button
-                  key={ratio}
-                  onClick={() => setSandCementRatio(ratio)}
-                  className={`py-3 px-3 rounded-xl text-sm font-medium transition-all touch-manipulation ${
-                    sandCementRatio === ratio
-                      ? "bg-amber-500 text-slate-900"
-                      : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-                  }`}
-                >
-                  {ratio}
-                </button>
-              ))}
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="MOT Type 1 Depth"
+                unit="mm"
+                type="text"
+                inputMode="numeric"
+                placeholder="100"
+                value={motDepthMm}
+                onChange={(e) => setMotDepthMm(e.target.value)}
+              />
+              <Input
+                label="Mortar Bed Depth"
+                unit="mm"
+                type="text"
+                inputMode="numeric"
+                placeholder="40"
+                value={mortarDepthMm}
+                onChange={(e) => setMortarDepthMm(e.target.value)}
+              />
             </div>
-            <p className="text-xs text-slate-500 mt-1">Sand : Cement (sand is the majority)</p>
+
+            {/* Sand/Cement Mix Ratio */}
+            <div>
+              <label className="text-sm font-medium text-slate-300 block mb-2">
+                Sand/Cement Mix Ratio
+              </label>
+              <div className="grid grid-cols-4 gap-2">
+                {MIX_RATIOS.map((ratio) => (
+                  <button
+                    key={ratio}
+                    onClick={() => setSandCementRatio(ratio)}
+                    className={`py-3 px-3 rounded-xl text-sm font-medium transition-all touch-manipulation ${
+                      sandCementRatio === ratio
+                        ? "bg-amber-500 text-slate-900"
+                        : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                    }`}
+                  >
+                    {ratio}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-slate-500 mt-1">Sand : Cement (sand is the majority)</p>
+            </div>
+
+            {/* Total depth summary */}
+            {results && (
+              <div className="bg-amber-900/30 rounded-lg p-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Total Dig Depth from DPC:</span>
+                  <span className="text-amber-400 font-bold">{results.totalDepthMm}mm</span>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">
+                  MOT {motDepthMm}mm + Mortar {mortarDepthMm}mm + Slab {SLAB_THICKNESS_MM}mm
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="pt-2">
@@ -502,30 +546,40 @@ ${t("validFor14Days")}`;
                 value={digOutDepthMm}
                 onChange={(e) => setDigOutDepthMm(e.target.value)}
               />
-              {results && results.digOutVolume > 0 && (
-                <div className="bg-red-900/30 rounded-lg p-3 space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Dig Out Area:</span>
-                    <span className="text-slate-100 font-medium">{results.digOutArea}m²</span>
+              {(() => {
+                // Calculate dig-out independently so it works without flagging area
+                const digCalc = calculateDigOut(
+                  true,
+                  parseFloat(digOutLength) || 0,
+                  parseFloat(digOutWidth) || 0,
+                  parseFloat(digOutDepthMm) || 0,
+                );
+                if (digCalc.digOutVolume <= 0) return null;
+                return (
+                  <div className="bg-red-900/30 rounded-lg p-3 space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Dig Out Area:</span>
+                      <span className="text-slate-100 font-medium">{digCalc.digOutArea}m²</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Dig Out Volume:</span>
+                      <span className="text-red-400 font-bold">{digCalc.digOutVolume}m³</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Waste Volume (inc. bulking):</span>
+                      <span className="text-red-400 font-bold">{digCalc.wasteVolume}m³</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Waste Tonnage:</span>
+                      <span className="text-red-400 font-bold">{digCalc.wasteTonnes} tonnes</span>
+                    </div>
+                    <div className="flex justify-between pt-2 border-t border-red-500/30">
+                      <span className="text-slate-300 font-semibold">6-Yard Skips Needed:</span>
+                      <span className="text-lg font-bold text-red-400">{digCalc.skipsNeeded}</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Dig Out Volume:</span>
-                    <span className="text-red-400 font-bold">{results.digOutVolume}m³</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Waste Volume (inc. bulking):</span>
-                    <span className="text-red-400 font-bold">{results.wasteVolume}m³</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Waste Tonnage:</span>
-                    <span className="text-red-400 font-bold">{results.wasteTonnes} tonnes</span>
-                  </div>
-                  <div className="flex justify-between pt-2 border-t border-red-500/30">
-                    <span className="text-slate-300 font-semibold">6-Yard Skips Needed:</span>
-                    <span className="text-lg font-bold text-red-400">{results.skipsNeeded}</span>
-                  </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
           )}
           
@@ -703,8 +757,8 @@ ${t("validFor14Days")}`;
               />
               <ResultItem
                 icon={<Box className="h-5 w-5" />}
-                label="Volume"
-                value={`${results.volume}m³`}
+                label="Total Depth"
+                value={`${results.totalDepthMm}mm`}
               />
             </div>
 
@@ -721,12 +775,12 @@ ${t("validFor14Days")}`;
                 note="Includes 10% for cuts"
               />
               <MaterialItem
-                label="MOT Type 1"
+                label={`MOT Type 1 (${results.motDepthMm}mm)`}
                 value={results.motType1Tonnes}
                 unit="tonnes"
               />
               <MaterialItem
-                label={`Sand (${results.sandCementRatio} mix)`}
+                label={`Sand (${results.sandCementRatio} mix, ${results.mortarDepthMm}mm bed)`}
                 value={results.sandTonnes}
                 unit="tonnes"
               />

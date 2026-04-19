@@ -7,18 +7,19 @@ export type SandCementRatio = "3:1" | "4:1" | "5:1" | "6:1";
 export interface EstimatorInputs {
   length: number; // meters
   width: number; // meters
-  excavationDepthMm: number; // millimeters
   diggingOut: boolean;
   digOutLength: number; // meters
   digOutWidth: number; // meters
   digOutDepthMm: number; // millimeters
   slabSize: SlabSize;
+  motDepthMm: number; // MOT Type 1 depth in mm
+  mortarDepthMm: number; // mortar bed depth in mm
   sandCementRatio: SandCementRatio;
 }
 
 export interface CalculationResults {
   area: number; // m²
-  volume: number; // m³ (excavation volume)
+  totalDepthMm: number; // total installation depth (MOT + mortar + slab)
   wasteVolume: number; // m³ (with bulking factor)
   wasteTonnes: number; // tonnes of waste
   skipsNeeded: number; // 6-yard skips
@@ -26,7 +27,9 @@ export interface CalculationResults {
   digOutVolume: number; // m³ raw dig out volume
   slabCount: number; // number of slabs
   slabSize: SlabSize;
+  motDepthMm: number; // MOT depth used
   motType1Tonnes: number; // tonnes of MOT Type 1
+  mortarDepthMm: number; // mortar bed depth used
   sandTonnes: number; // tonnes of sand (for mix)
   cementBags: number; // 25kg bags of cement
   sandCementRatio: SandCementRatio;
@@ -43,12 +46,9 @@ export function calculateArea(length: number, width: number): number {
 }
 
 /**
- * Calculate volume in cubic meters
- * Converts depth from mm to m
+ * Slab thickness in mm (standard paving slab)
  */
-export function calculateVolume(area: number, depthMm: number): number {
-  return area * (depthMm / 1000);
-}
+export const SLAB_THICKNESS_MM = 50;
 
 /**
  * Calculate waste volume with bulking/expansion factor
@@ -100,10 +100,10 @@ export function calculateSlabs(area: number, slabSize: SlabSize = "600x600"): nu
 /**
  * Calculate MOT Type 1 sub-base required in tonnes
  * MOT Type 1 density ~2.1 tonnes per m³
- * Depth based on excavation minus slab thickness (~50mm) minus mortar bed (~30mm)
+ * User specifies the actual MOT depth they want to lay
  */
-export function calculateMOT(area: number, excavationDepthMm: number): number {
-  const motDepthMm = Math.max(0, excavationDepthMm - 50 - 30); // subtract slab + mortar bed
+export function calculateMOT(area: number, motDepthMm: number): number {
+  if (motDepthMm <= 0) return 0;
   const motVolume = area * (motDepthMm / 1000);
   const motDensity = 2.1;
   return Number((motVolume * motDensity).toFixed(2));
@@ -111,15 +111,16 @@ export function calculateMOT(area: number, excavationDepthMm: number): number {
 
 /**
  * Calculate sand and cement quantities for mortar bed
- * Based on a 30mm mortar bed
+ * User specifies the mortar bed depth
  * Sand density ~1.6 tonnes/m³, cement density ~1.5 tonnes/m³
  */
 export function calculateSandCement(
   area: number,
-  ratio: SandCementRatio
+  ratio: SandCementRatio,
+  mortarDepthMm: number
 ): { sandTonnes: number; cementBags: number } {
-  const bedDepthMm = 30; // standard mortar bed
-  const bedVolume = area * (bedDepthMm / 1000); // m³
+  if (mortarDepthMm <= 0) return { sandTonnes: 0, cementBags: 0 };
+  const bedVolume = area * (mortarDepthMm / 1000); // m³
 
   const ratioParts = parseInt(ratio.split(":")[0]); // e.g. 4 from "4:1"
   const totalParts = ratioParts + 1;
@@ -139,7 +140,6 @@ export function calculateSandCement(
  */
 export function calculateAll(inputs: EstimatorInputs): CalculationResults {
   const area = calculateArea(inputs.length, inputs.width);
-  const volume = calculateVolume(area, inputs.excavationDepthMm);
   const digOut = calculateDigOut(
     inputs.diggingOut,
     inputs.digOutLength,
@@ -147,12 +147,13 @@ export function calculateAll(inputs: EstimatorInputs): CalculationResults {
     inputs.digOutDepthMm
   );
   const slabCount = calculateSlabs(area, inputs.slabSize);
-  const motType1Tonnes = calculateMOT(area, inputs.excavationDepthMm);
-  const { sandTonnes, cementBags } = calculateSandCement(area, inputs.sandCementRatio);
+  const motType1Tonnes = calculateMOT(area, inputs.motDepthMm);
+  const { sandTonnes, cementBags } = calculateSandCement(area, inputs.sandCementRatio, inputs.mortarDepthMm);
+  const totalDepthMm = inputs.motDepthMm + inputs.mortarDepthMm + SLAB_THICKNESS_MM;
 
   return {
     area: Number(area.toFixed(2)),
-    volume: Number(volume.toFixed(3)),
+    totalDepthMm,
     wasteVolume: digOut.wasteVolume,
     wasteTonnes: digOut.wasteTonnes,
     skipsNeeded: digOut.skipsNeeded,
@@ -160,7 +161,9 @@ export function calculateAll(inputs: EstimatorInputs): CalculationResults {
     digOutVolume: digOut.digOutVolume,
     slabCount,
     slabSize: inputs.slabSize,
+    motDepthMm: inputs.motDepthMm,
     motType1Tonnes,
+    mortarDepthMm: inputs.mortarDepthMm,
     sandTonnes,
     cementBags,
     sandCementRatio: inputs.sandCementRatio,

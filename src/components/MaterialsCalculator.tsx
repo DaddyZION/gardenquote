@@ -48,14 +48,14 @@ const getDefaultMaterials = (results: CalculationResults | null): MaterialItem[]
     },
     {
       id: "mot",
-      name: "MOT Type 1",
+      name: `MOT Type 1 (${results.motDepthMm}mm)`,
       quantity: results.motType1Tonnes.toString(),
       unitPrice: MATERIAL_PRICES.motType1PerTonne.toString(),
       unit: "tonnes",
     },
     {
       id: "sand",
-      name: `Sand (${results.sandCementRatio} mix)`,
+      name: `Sand (${results.sandCementRatio} mix, ${results.mortarDepthMm}mm bed)`,
       quantity: results.sandTonnes.toString(),
       unitPrice: MATERIAL_PRICES.sandPerTonne.toString(),
       unit: "tonnes",
@@ -112,7 +112,7 @@ export function MaterialsCalculator({ results, onTotalChange }: MaterialsCalcula
     if (results) {
       setMaterials(getDefaultMaterials(results));
     }
-  }, [results?.area, results?.slabCount, results?.motType1Tonnes, results?.sandTonnes, results?.cementBags, results?.skipsNeeded, results?.slabSize, results?.sandCementRatio]);
+  }, [results?.area, results?.slabCount, results?.motType1Tonnes, results?.motDepthMm, results?.mortarDepthMm, results?.sandTonnes, results?.cementBags, results?.skipsNeeded, results?.slabSize, results?.sandCementRatio]);
 
   // Calculate total whenever materials change
   useEffect(() => {
